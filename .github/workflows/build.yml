@@ -39,17 +39,6 @@ jobs:
           # Update Podfile minimum deployment target
           if [ -f "macos/Podfile" ]; then
             sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '14.0'/g" macos/Podfile
-            # Inject arm64 settings into existing post_install hook if it exists
-            if grep -q "post_install" macos/Podfile; then
-              sed -i '' '/post_install do |installer|/a\
-            installer.pods_project.targets.each do |target|\
-              target.build_configurations.each do |config|\
-                config.build_settings["ARCHS"] = "arm64"\
-                config.build_settings["EXCLUDED_ARCHS[sdk=macosx*]"] = "x86_64"\
-              end\
-            end
-' macos/Podfile
-            fi
           fi
 
       - uses: subosito/flutter-action@v2
@@ -58,12 +47,14 @@ jobs:
           cache: true
       
       - name: Clean and Build macOS (arm64 only)
+        env:
+          ARCHS: arm64
+          EXCLUDED_ARCHS: x86_64
         run: |
           flutter clean
           flutter pub get
-          cd macos && pod deintegrate && pod install && cd ..
-          # Build only for arm64 since audiotags library doesn't support x86_64
-          flutter build macos --release -- ARCHS=arm64 EXCLUDED_ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
+          cd macos && pod deintegrate && pod install --repo-update && cd ..
+          flutter build macos --release
       
       - name: ZIP macOS App
         run: |
