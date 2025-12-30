@@ -32,9 +32,9 @@ jobs:
           VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Fix Deployment Target
+      - name: Force macOS 11.0 Deployment Target
         run: |
-          # This forces the project to use macOS 11.0 to fix the audiotags error
+          # This fixes the 'audiotags' Undefined Symbols error by forcing a newer macOS SDK
           find . -name "project.pbxproj" -exec sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*/MACOSX_DEPLOYMENT_TARGET = 11.0/g' {} +
 
       - uses: subosito/flutter-action@v2
@@ -58,7 +58,7 @@ jobs:
           name: doudou-macos
           path: doudou-macos-universal.zip
 
-  # 2. BUILD WINDOWS (x64 only)
+  # 2. BUILD WINDOWS (x64)
   build-windows:
     runs-on: windows-latest
     continue-on-error: true
@@ -89,18 +89,18 @@ jobs:
           name: doudou-windows-x64
           path: doudou-windows-x64.zip
 
-  # 3. BUILD LINUX ARM64
+  # 3. BUILD LINUX ARM64 (Native ARM Runner)
   build-linux-arm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     continue-on-error: true
     steps:
       - name: Clone GitLab Repo
         run: git clone https://gitlab.com/Openlyst/doudou.git . 
 
-      - name: Install ARM64 Dependencies
+      - name: Install Linux Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 
       - uses: subosito/flutter-action@v2
         with:
@@ -110,7 +110,7 @@ jobs:
       - name: Build Linux ARM64
         run: |
           flutter pub get
-          flutter build linux --release --target-platform=linux-arm64
+          flutter build linux --release
       
       - name: ZIP Linux Build
         run: |
@@ -139,6 +139,6 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: Doudou Build ${{ github.run_number }}
-          body: "Automated build for macOS, Windows (x64), and Linux (ARM64)."
+          body: "Automated build. Platforms: macOS, Windows x64, Linux ARM64."
           files: |
             *.zip
