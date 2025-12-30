@@ -113,7 +113,10 @@ jobs:
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev lld
+          # Create symlink for LLVM linker if needed
+          sudo ln -sf /usr/bin/ld.lld /usr/lib/llvm-18/bin/ld.lld || true
+          sudo ln -sf /usr/bin/ld /usr/lib/llvm-18/bin/ld || true
 
       - name: Build Linux ARM64
         run: |
