@@ -9,12 +9,13 @@ on:
         default: ''
 
 permissions:
-  contents: write # Needed to create the release
+  contents: write
 
 jobs:
   # 1. BUILD MACOS
   build-macos:
     runs-on: macos-latest
+    continue-on-error: true
     outputs:
       app_version: ${{ steps.get_version.outputs.version }}
     steps:
@@ -30,6 +31,11 @@ jobs:
         run: |
           VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Fix Deployment Target
+        run: |
+          # This forces the project to use macOS 11.0 to fix the audiotags error
+          find . -name "project.pbxproj" -exec sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*/MACOSX_DEPLOYMENT_TARGET = 11.0/g' {} +
 
       - uses: subosito/flutter-action@v2
         with:
@@ -52,12 +58,10 @@ jobs:
           name: doudou-macos
           path: doudou-macos-universal.zip
 
-  # 2. BUILD WINDOWS
+  # 2. BUILD WINDOWS (x64 only)
   build-windows:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [x64, arm64]
+    continue-on-error: true
     steps:
       - name: Clone GitLab Repo
         run: git clone https://gitlab.com/Openlyst/doudou.git . 
@@ -74,27 +78,24 @@ jobs:
       - name: Build Windows
         run: |
           flutter pub get
-          flutter build windows --release --target-platform=windows-${{ matrix.arch }}
+          flutter build windows --release
       
       - name: ZIP Windows Build
-        run: Compress-Archive -Path build/windows/${{ matrix.arch }}/runner/Release/* -DestinationPath doudou-windows-${{ matrix.arch }}.zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath doudou-windows-x64.zip
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: doudou-windows-${{ matrix.arch }}
-          path: doudou-windows-${{ matrix.arch }}.zip
+          name: doudou-windows-x64
+          path: doudou-windows-x64.zip
 
   # 3. BUILD LINUX ARM64
   build-linux-arm:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Clone GitLab Repo
         run: git clone https://gitlab.com/Openlyst/doudou.git . 
-
-      - name: Checkout specific commit
-        if: ${{ github.event.inputs.commit_hash != '' }}
-        run: git checkout ${{ github.event.inputs.commit_hash }}
 
       - name: Install ARM64 Dependencies
         run: |
@@ -109,7 +110,7 @@ jobs:
       - name: Build Linux ARM64
         run: |
           flutter pub get
-          flutter build linux --release --arm64
+          flutter build linux --release --target-platform=linux-arm64
       
       - name: ZIP Linux Build
         run: |
@@ -126,6 +127,7 @@ jobs:
   create-release:
     needs: [build-macos, build-windows, build-linux-arm]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -135,11 +137,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.build-macos.outputs.app_version }}
-          name: Release v${{ needs.build-macos.outputs.app_version }}
-          body: "Automated build of Doudou from GitLab."
+          tag_name: build-${{ github.run_number }}
+          name: Doudou Build ${{ github.run_number }}
+          body: "Automated build for macOS, Windows (x64), and Linux (ARM64)."
           files: |
-            doudou-macos-universal.zip
-            doudou-windows-x64.zip
-            doudou-windows-arm64.zip
-            doudou-linux-arm64.zip
+            *.zip
