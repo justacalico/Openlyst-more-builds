@@ -36,20 +36,20 @@ jobs:
         run: |
           # Update deployment target to macOS 14.0 to match audiotags library requirements
           find . -name "project.pbxproj" -exec sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*/MACOSX_DEPLOYMENT_TARGET = 14.0/g' {} +
-          # Update Podfile minimum deployment target and add post_install hook to force arm64
+          # Update Podfile minimum deployment target
           if [ -f "macos/Podfile" ]; then
             sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '14.0'/g" macos/Podfile
-            # Add post_install hook to force arm64 for all pods
-            echo "" >> macos/Podfile
-            echo "post_install do |installer|" >> macos/Podfile
-            echo "  installer.pods_project.targets.each do |target|" >> macos/Podfile
-            echo "    target.build_configurations.each do |config|" >> macos/Podfile
-            echo "      config.build_settings['ARCHS'] = 'arm64'" >> macos/Podfile
-            echo "      config.build_settings['EXCLUDED_ARCHS[sdk=macosx*]'] = 'x86_64'" >> macos/Podfile
-            echo "      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '14.0'" >> macos/Podfile
-            echo "    end" >> macos/Podfile
-            echo "  end" >> macos/Podfile
-            echo "end" >> macos/Podfile
+            # Inject arm64 settings into existing post_install hook if it exists
+            if grep -q "post_install" macos/Podfile; then
+              sed -i '' '/post_install do |installer|/a\
+            installer.pods_project.targets.each do |target|\
+              target.build_configurations.each do |config|\
+                config.build_settings["ARCHS"] = "arm64"\
+                config.build_settings["EXCLUDED_ARCHS[sdk=macosx*]"] = "x86_64"\
+              end\
+            end
+' macos/Podfile
+            fi
           fi
 
       - uses: subosito/flutter-action@v2
@@ -63,13 +63,11 @@ jobs:
           flutter pub get
           cd macos && pod deintegrate && pod install && cd ..
           # Build only for arm64 since audiotags library doesn't support x86_64
-          cd macos
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release ARCHS=arm64 EXCLUDED_ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO -derivedDataPath ../build/macos archive -archivePath ../build/macos/Runner.xcarchive
-          cd ..
+          flutter build macos --release -- ARCHS=arm64 EXCLUDED_ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
       
       - name: ZIP macOS App
         run: |
-          cd build/macos/Runner.xcarchive/Products/Applications/
+          cd build/macos/Build/Products/Release/
           zip -r ../../../../../doudou-macos-arm64.zip .
       
       - name: Upload macOS Artifact
