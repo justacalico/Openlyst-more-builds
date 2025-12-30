@@ -1,6 +1,12 @@
 name: Manual Multi-Platform Build
 on:
-  workflow_dispatch: # Allows you to click "Run" manually
+  workflow_dispatch:  # Allows you to click "Run" manually
+    inputs:
+      commit_hash:
+        description: 'Commit hash to build (leave empty for latest)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   # 1. BUILD MACOS (Universal Binary)
@@ -8,10 +14,14 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
+        run:  git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name:  Checkout specific commit
+        if: ${{ github.event.inputs.commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.commit_hash }}
 
       - uses: subosito/flutter-action@v2
-        with:
+        with: 
           channel: 'stable'
           cache: true
       
@@ -20,7 +30,7 @@ jobs:
           flutter pub get
           flutter build macos --release
       
-      - name: Upload macOS Artifact
+      - name:  Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: doudou-macos
@@ -34,10 +44,14 @@ jobs:
         arch: [x64, arm64]
     steps:
       - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
+        run: git clone https://gitlab.com/Openlyst/doudou.git . 
+
+      - name: Checkout specific commit
+        if: ${{ github. event.inputs.commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs. commit_hash }}
 
       - uses: subosito/flutter-action@v2
-        with:
+        with: 
           channel: 'stable'
           cache: true
 
@@ -46,18 +60,22 @@ jobs:
           flutter pub get
           flutter build windows --release --target-platform=windows-${{ matrix.arch }}
       
-      - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
+      - name:  Upload Windows Artifact
+        uses:  actions/upload-artifact@v4
         with:
-          name: doudou-windows-${{ matrix.arch }}
+          name:  doudou-windows-${{ matrix.arch }}
           path: build/windows/${{ matrix.arch }}/runner/Release/
 
   # 3. BUILD LINUX ARM64 (Cross-Compile)
-  build-linux-arm:
+  build-linux-arm: 
     runs-on: ubuntu-latest
     steps:
       - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
+        run: git clone https://gitlab.com/Openlyst/doudou.git . 
+
+      - name:  Checkout specific commit
+        if: ${{ github.event.inputs.commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.commit_hash }}
 
       - name: Install ARM64 Dependencies
         run: |
@@ -67,7 +85,7 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - uses: subosito/flutter-action@v2
-        with:
+        with: 
           channel: 'stable'
           cache: true
 
