@@ -1,4 +1,4 @@
-name: Manual Multi-Platform Build
+name: Manual Windows Build
 on:
   workflow_dispatch:
     inputs:
@@ -12,83 +12,8 @@ permissions:
   contents: write
 
 jobs:
-  # 1. BUILD MACOS (Apple Silicon only - audiotags doesn't support x86_64)
-  build-macos:
-    runs-on: macos-15
-    continue-on-error: true
-    outputs:
-      app_version: ${{ steps.get_version.outputs.version }}
-    steps:
-      - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
-      
-      - name: Checkout specific commit
-        if: ${{ github.event.inputs.commit_hash != '' }}
-        run: git checkout ${{ github.event.inputs.commit_hash }}
-
-      - name: Get Version from Pubspec
-        id: get_version
-        run: |
-          VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Install Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          target: x86_64-apple-darwin
-      
-      - name: Add arm64 target
-        run: rustup target add aarch64-apple-darwin
-
-      - name: Fix macOS Build Configuration
-        run: |
-          # Select latest Xcode
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-          # Update deployment target to macOS 14.5 to exactly match audiotags library
-          find . -name "project.pbxproj" -exec sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*/MACOSX_DEPLOYMENT_TARGET = 14.5/g' {} +
-          # Update Podfile minimum deployment target
-          if [ -f "macos/Podfile" ]; then
-            sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '14.5'/g" macos/Podfile
-          fi
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-      
-      - name: Rebuild audiotags native libraries
-        run: |
-          # Clone audiotags repo and rebuild the native libraries
-          git clone https://github.com/erikas-taroza/audiotags.git /tmp/audiotags
-          cd /tmp/audiotags
-          flutter pub get --directory=audiotags
-          flutter pub get --directory=cli
-          dart run cli build macos -v
-          # Copy rebuilt libraries to pub cache
-          cp -r audiotags/macos/Libs/* ~/.pub-cache/hosted/pub.dev/audiotags-1.4.5/macos/Libs/
-
-      - name: Clean and Build macOS
-        run: |
-          flutter clean
-          flutter pub get
-          cd macos && pod deintegrate && pod install --repo-update && cd ..
-          flutter build macos --release
-      
-      - name: ZIP macOS App
-        run: |
-          cd build/macos/Build/Products/Release/
-          zip -r ../../../../../doudou-macos-arm64.zip .
-      
-      - name: Upload macOS Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: doudou-macos
-          path: doudou-macos-arm64.zip
-
-  # 2. BUILD WINDOWS (x64)
-  build-windows:
+  # 1. BUILD WINDOWS - DOUDOU (x64)
+  build-windows-doudou:
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -118,107 +43,40 @@ jobs:
           name: doudou-windows-x64
           path: doudou-windows-x64.zip
 
-  # 3. BUILD LINUX ARM64 (Using Docker)
-  build-linux-arm:
-    runs-on: ubuntu-24.04-arm
-    container:
-      image: ghcr.io/cirruslabs/flutter:stable
+  # 2. BUILD WINDOWS - DOCAN (x64)
+  build-windows-docan:
+    runs-on: windows-latest
     continue-on-error: true
     steps:
       - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git . 
+        run: git clone https://gitlab.com/Openlyst/docan.git . 
 
       - name: Checkout specific commit
         if: ${{ github.event.inputs.commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.commit_hash }}
-
-      - name: Install Linux Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev lld
-          # Create symlink for LLVM linker if needed
-          sudo ln -sf /usr/bin/ld.lld /usr/lib/llvm-18/bin/ld.lld || true
-          sudo ln -sf /usr/bin/ld /usr/lib/llvm-18/bin/ld || true
-
-      - name: Build Linux ARM64
-        run: |
-          flutter pub get
-          flutter build linux --release
-      
-      - name: ZIP Linux Build
-        run: |
-          cd build/linux/arm64/release/bundle/
-          zip -r ../../../../../doudou-linux-arm64.zip .
-
-      - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: doudou-linux-arm64
-          path: doudou-linux-arm64.zip
-
-  # 4. BUILD IOS
-  build-ios:
-    runs-on: macos-15
-    continue-on-error: true
-    steps:
-      - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
-
-      - name: Checkout specific commit
-        if: ${{ github.event.inputs.commit_hash != '' }}
-        run: git checkout ${{ github.event.inputs.commit_hash }}
-
-      - name: Setup Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Install Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-      
-      - name: Add iOS targets
-        run: |
-          rustup target add aarch64-apple-ios
-          rustup target add x86_64-apple-ios
 
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Rebuild audiotags native libraries
+      - name: Build Windows
         run: |
-          # Clone audiotags repo and rebuild the native libraries for iOS
-          git clone https://github.com/erikas-taroza/audiotags.git /tmp/audiotags
-          cd /tmp/audiotags
-          flutter pub get --directory=audiotags
-          flutter pub get --directory=cli
-          dart run cli build ios -v
-          # Copy rebuilt libraries to pub cache
-          cp -r audiotags/ios/Libs/* ~/.pub-cache/hosted/pub.dev/audiotags-1.4.5/ios/Libs/
-
-      - name: Build iOS
-        run: |
-          flutter clean
           flutter pub get
-          flutter build ios --release --no-codesign
+          flutter build windows --release
+      
+      - name: ZIP Windows Build
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath docan-windows-x64.zip
 
-      - name: Create unsigned IPA
-        run: |
-          mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r doudou-ios-unsigned.ipa Payload
-
-      - name: Upload iOS Artifact
+      - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: doudou-ios
-          path: doudou-ios-unsigned.ipa
+          name: docan-windows-x64
+          path: docan-windows-x64.zip
 
-  # 5. CREATE GITHUB RELEASE
+  # 3. CREATE GITHUB RELEASE
   create-release:
-    needs: [build-macos, build-windows, build-linux-arm, build-ios]
+    needs: [build-windows-doudou, build-windows-docan]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -231,8 +89,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Doudou Build ${{ github.run_number }}
-          body: "Automated build. Platforms: macOS, Windows x64, Linux ARM64, iOS."
+          name: Doudou & Docan Build ${{ github.run_number }}
+          body: "Automated build. Platforms: Windows x64 only."
           files: |
             *.zip
-            *.ipa
