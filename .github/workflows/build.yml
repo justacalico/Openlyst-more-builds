@@ -143,6 +143,7 @@ jobs:
       - name: Build iOS (No Code Signing)
         run: |
           flutter pub get
+          dart run flutter_rust_bridge_codegen build-ios --release || true
           flutter build ios --release --no-codesign
 
       - name: Create unsigned IPA
