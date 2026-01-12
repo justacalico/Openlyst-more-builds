@@ -2,6 +2,15 @@ name: Manual Windows Build
 on:
   workflow_dispatch:
     inputs:
+      app_to_build:
+        description: 'Select which app to build'
+        required: true
+        type: choice
+        options:
+          - All
+          - Doudou
+          - Docan
+        default: 'All'
       commit_hash:
         description: 'Commit hash to build (leave empty for latest)'
         required: false
@@ -14,6 +23,7 @@ permissions:
 jobs:
   # 1. BUILD WINDOWS - DOUDOU (x64)
   build-windows-doudou:
+    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Doudou' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -45,6 +55,7 @@ jobs:
 
   # 2. BUILD WINDOWS - DOCAN (x64)
   build-windows-docan:
+    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Docan' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -78,7 +89,7 @@ jobs:
   create-release:
     needs: [build-windows-doudou, build-windows-docan]
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && !cancelled()
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -89,7 +100,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Doudou & Docan Build ${{ github.run_number }}
-          body: "Automated build. Platforms: Windows x64 only."
+          name: ${{ github.event.inputs.app_to_build }} Build ${{ github.run_number }}
+          body: "Automated build for ${{ github.event.inputs.app_to_build }}. Platform: Windows x64."
           files: |
             *.zip
