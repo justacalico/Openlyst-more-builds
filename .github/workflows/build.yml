@@ -2246,6 +2246,18 @@ jobs:
         with:
           merge-multiple: true
 
+      - name: Flatten artifacts directory
+        run: |
+          # Move .deb and .AppImage files from artifacts/ to root directory
+          if [ -d "artifacts" ]; then
+            find artifacts -name "*.deb" -exec mv {} . \; 2>/dev/null || true
+            find artifacts -name "*.AppImage" -exec mv {} . \; 2>/dev/null || true
+            rm -rf artifacts
+          fi
+          echo "=== Files available for release ==="
+          ls -la *.zip *.apk *.aab *.ipa *.deb *.AppImage 2>/dev/null || echo "Listing files..."
+          find . -maxdepth 1 -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -ls
+
       - name: Generate SHA256 checksums
         run: |
           echo "Generating SHA256 checksums..."
