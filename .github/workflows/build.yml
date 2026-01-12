@@ -2,32 +2,41 @@ name: Manual Windows Build
 on:
   workflow_dispatch:
     inputs:
-      app_to_build:
-        description: 'Select which app to build'
-        required: true
-        type: choice
-        options:
-          - All
-          - Doudou
-          - Docan
-          - Finar
-          - Klit
-        default: 'All'
+      build_doudou:
+        description: 'Build Doudou'
+        required: false
+        type: boolean
+        default: true
       doudou_commit_hash:
         description: 'Doudou commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      build_docan:
+        description: 'Build Docan'
+        required: false
+        type: boolean
+        default: true
       docan_commit_hash:
         description: 'Docan commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      build_finar:
+        description: 'Build Finar'
+        required: false
+        type: boolean
+        default: true
       finar_commit_hash:
         description: 'Finar commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      build_klit:
+        description: 'Build Klit'
+        required: false
+        type: boolean
+        default: true
       klit_commit_hash:
         description: 'Klit commit hash (leave empty for latest)'
         required: false
@@ -40,7 +49,7 @@ permissions:
 jobs:
   # 1. BUILD WINDOWS - DOUDOU (x64)
   build-windows-doudou:
-    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Doudou' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -72,7 +81,7 @@ jobs:
 
   # 2. BUILD WINDOWS - DOCAN (x64)
   build-windows-docan:
-    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Docan' }}
+    if: ${{ github.event.inputs.build_docan == 'true' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -104,7 +113,7 @@ jobs:
 
   # 3. BUILD WINDOWS - FINAR (x64)
   build-windows-finar:
-    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Finar' }}
+    if: ${{ github.event.inputs.build_finar == 'true' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -137,7 +146,7 @@ jobs:
 
   # 4. BUILD WINDOWS - KLIT (x64)
   build-windows-klit:
-    if: ${{ github.event.inputs.app_to_build == 'All' || github.event.inputs.app_to_build == 'Klit' }}
+    if: ${{ github.event.inputs.build_klit == 'true' }}
     runs-on: windows-latest
     continue-on-error: true
     steps:
@@ -182,7 +191,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: ${{ github.event.inputs.app_to_build }} Build ${{ github.run_number }}
-          body: "Automated build for ${{ github.event.inputs.app_to_build }}. Platform: Windows x64."
+          name: Build ${{ github.run_number }}
+          body: "Automated build. Platform: Windows x64."
           files: |
             *.zip
