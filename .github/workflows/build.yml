@@ -91,6 +91,12 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          rustup target add aarch64-apple-ios
+
       - name: Get version from pubspec
         id: version
         run: |
@@ -98,6 +104,12 @@ jobs:
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build Rust library for iOS
+        run: |
+          source $HOME/.cargo/env
+          cd rust
+          cargo build --release --target aarch64-apple-ios
 
       - name: Build iOS (No Code Signing)
         run: |
