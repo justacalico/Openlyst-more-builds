@@ -328,6 +328,316 @@ jobs:
           path: klit-*-windows-x64.zip
 
   # ============================================================================
+  # MACOS BUILDS (No Code Signing)
+  # ============================================================================
+
+  # MACOS - DOUDOU
+  build-macos-doudou:
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build macOS (No Code Signing)
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+        env:
+          # Disable code signing
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+
+      - name: Disable code signing in Xcode project
+        run: |
+          # Disable code signing in the release configuration
+          cd macos
+          /usr/libexec/PlistBuddy -c "Set :buildSettings:CODE_SIGN_IDENTITY ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          xcodebuild -project Runner.xcodeproj -scheme Runner -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -derivedDataPath ../build/macos_unsigned || true
+
+      - name: Create ZIP (unsigned)
+        run: |
+          cd build/macos/Build/Products/Release
+          # Create a zip of the .app bundle
+          zip -r $GITHUB_WORKSPACE/doudou-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-macos
+          path: doudou-*-macos-unsigned.zip
+
+  # MACOS - DOCAN
+  build-macos-docan:
+    if: ${{ github.event.inputs.build_docan == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/docan.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.docan_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.docan_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build macOS (No Code Signing)
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+
+      - name: Create ZIP (unsigned)
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r $GITHUB_WORKSPACE/docan-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-macos
+          path: docan-*-macos-unsigned.zip
+
+  # MACOS - FINAR
+  build-macos-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build macOS (No Code Signing)
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+
+      - name: Create ZIP (unsigned)
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-macos
+          path: finar-*-macos-unsigned.zip
+
+  # MACOS - KLIT
+  build-macos-klit:
+    if: ${{ github.event.inputs.build_klit == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/klit.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.klit_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.klit_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build macOS (No Code Signing)
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+
+      - name: Create ZIP (unsigned)
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r $GITHUB_WORKSPACE/klit-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-macos
+          path: klit-*-macos-unsigned.zip
+
+  # ============================================================================
   # ANDROID BUILDS (APK + AAB)
   # ============================================================================
 
@@ -1614,6 +1924,10 @@ jobs:
       - build-windows-docan
       - build-windows-finar
       - build-windows-klit
+      - build-macos-doudou
+      - build-macos-docan
+      - build-macos-finar
+      - build-macos-klit
       - build-android-doudou
       - build-android-docan
       - build-android-finar
@@ -1687,6 +2001,7 @@ jobs:
             echo "### Doudou" >> release_notes.md
             echo "- Version: ${{ needs.build-android-doudou.outputs.version || needs.build-windows-doudou.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-doudou.outputs.status || 'skipped' }} ${{ needs.build-windows-doudou.outputs.duration && format('({0} min)', needs.build-windows-doudou.outputs.duration) || '' }}" >> release_notes.md
+            echo "- macOS: ${{ needs.build-macos-doudou.outputs.status || 'skipped' }} ${{ needs.build-macos-doudou.outputs.duration && format('({0} min)', needs.build-macos-doudou.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-doudou.outputs.status || 'skipped' }} ${{ needs.build-android-doudou.outputs.duration && format('({0} min)', needs.build-android-doudou.outputs.duration) || '' }} - Signing: ${{ needs.build-android-doudou.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-doudou.outputs.status || 'skipped' }} ${{ needs.build-linux-doudou.outputs.duration && format('({0} min)', needs.build-linux-doudou.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-doudou.outputs.status || 'skipped' }} ${{ needs.build-web-doudou.outputs.duration && format('({0} min)', needs.build-web-doudou.outputs.duration) || '' }}" >> release_notes.md
@@ -1698,6 +2013,7 @@ jobs:
             echo "### Docan" >> release_notes.md
             echo "- Version: ${{ needs.build-android-docan.outputs.version || needs.build-windows-docan.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-docan.outputs.status || 'skipped' }} ${{ needs.build-windows-docan.outputs.duration && format('({0} min)', needs.build-windows-docan.outputs.duration) || '' }}" >> release_notes.md
+            echo "- macOS: ${{ needs.build-macos-docan.outputs.status || 'skipped' }} ${{ needs.build-macos-docan.outputs.duration && format('({0} min)', needs.build-macos-docan.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-docan.outputs.status || 'skipped' }} ${{ needs.build-android-docan.outputs.duration && format('({0} min)', needs.build-android-docan.outputs.duration) || '' }} - Signing: ${{ needs.build-android-docan.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-docan.outputs.status || 'skipped' }} ${{ needs.build-linux-docan.outputs.duration && format('({0} min)', needs.build-linux-docan.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-docan.outputs.status || 'skipped' }} ${{ needs.build-web-docan.outputs.duration && format('({0} min)', needs.build-web-docan.outputs.duration) || '' }}" >> release_notes.md
@@ -1709,6 +2025,7 @@ jobs:
             echo "### Finar" >> release_notes.md
             echo "- Version: ${{ needs.build-android-finar.outputs.version || needs.build-windows-finar.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-finar.outputs.status || 'skipped' }} ${{ needs.build-windows-finar.outputs.duration && format('({0} min)', needs.build-windows-finar.outputs.duration) || '' }}" >> release_notes.md
+            echo "- macOS: ${{ needs.build-macos-finar.outputs.status || 'skipped' }} ${{ needs.build-macos-finar.outputs.duration && format('({0} min)', needs.build-macos-finar.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-finar.outputs.status || 'skipped' }} ${{ needs.build-android-finar.outputs.duration && format('({0} min)', needs.build-android-finar.outputs.duration) || '' }} - Signing: ${{ needs.build-android-finar.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-finar.outputs.status || 'skipped' }} ${{ needs.build-linux-finar.outputs.duration && format('({0} min)', needs.build-linux-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-finar.outputs.status || 'skipped' }} ${{ needs.build-web-finar.outputs.duration && format('({0} min)', needs.build-web-finar.outputs.duration) || '' }}" >> release_notes.md
@@ -1720,6 +2037,7 @@ jobs:
             echo "### Klit" >> release_notes.md
             echo "- Version: ${{ needs.build-android-klit.outputs.version || needs.build-windows-klit.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-klit.outputs.status || 'skipped' }} ${{ needs.build-windows-klit.outputs.duration && format('({0} min)', needs.build-windows-klit.outputs.duration) || '' }}" >> release_notes.md
+            echo "- macOS: ${{ needs.build-macos-klit.outputs.status || 'skipped' }} ${{ needs.build-macos-klit.outputs.duration && format('({0} min)', needs.build-macos-klit.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-klit.outputs.status || 'skipped' }} ${{ needs.build-android-klit.outputs.duration && format('({0} min)', needs.build-android-klit.outputs.duration) || '' }} - Signing: ${{ needs.build-android-klit.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-klit.outputs.status || 'skipped' }} ${{ needs.build-linux-klit.outputs.duration && format('({0} min)', needs.build-linux-klit.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-klit.outputs.status || 'skipped' }} ${{ needs.build-web-klit.outputs.duration && format('({0} min)', needs.build-web-klit.outputs.duration) || '' }}" >> release_notes.md
@@ -1747,6 +2065,10 @@ jobs:
           if [ "${{ needs.build-windows-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Windows"; fi
           if [ "${{ needs.build-windows-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Windows"; fi
           if [ "${{ needs.build-windows-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Windows"; fi
+          if [ "${{ needs.build-macos-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-macOS"; fi
+          if [ "${{ needs.build-macos-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-macOS"; fi
+          if [ "${{ needs.build-macos-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-macOS"; fi
+          if [ "${{ needs.build-macos-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-macOS"; fi
           if [ "${{ needs.build-android-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Android"; fi
           if [ "${{ needs.build-android-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Android"; fi
           if [ "${{ needs.build-android-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Android"; fi
@@ -1779,6 +2101,10 @@ jobs:
             echo "" >> release_notes.md
           fi
           
+          # Note about macOS unsigned builds
+          echo "🍎 **macOS builds are unsigned** - Users will need to right-click and select 'Open' to bypass Gatekeeper, or run \`xattr -cr /path/to/App.app\` in Terminal." >> release_notes.md
+          echo "" >> release_notes.md
+          
           if [ -z "$FAILED_BUILDS" ] && [ -z "$DEBUG_SIGNED" ]; then
             echo "✅ All requested builds completed successfully with release signing!" >> release_notes.md
           fi
@@ -1791,6 +2117,7 @@ jobs:
           echo "| Platform | Formats | Architecture |" >> release_notes.md
           echo "|----------|---------|--------------|" >> release_notes.md
           echo "| Windows | ZIP | x64 |" >> release_notes.md
+          echo "| macOS | ZIP (unsigned) | arm64/x64 |" >> release_notes.md
           echo "| Android | APK, AAB | arm64-v8a, armeabi-v7a, x86_64 |" >> release_notes.md
           echo "| Linux | ZIP, DEB, AppImage | x86_64 |" >> release_notes.md
           echo "| Web | ZIP | Universal |" >> release_notes.md
