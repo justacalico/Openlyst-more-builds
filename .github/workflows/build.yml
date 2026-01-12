@@ -61,6 +61,299 @@ env:
 
 jobs:
   # ============================================================================
+  # IOS BUILDS (No Code Signing)
+  # ============================================================================
+
+  # IOS - DOUDOU
+  build-ios-doudou:
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (No Code Signing)
+        run: |
+          flutter pub get
+          flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r doudou-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
+          rm -rf Payload
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-ios
+          path: doudou-*-ios-unsigned.ipa
+
+  # IOS - DOCAN
+  build-ios-docan:
+    if: ${{ github.event.inputs.build_docan == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/docan.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.docan_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.docan_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (No Code Signing)
+        run: |
+          flutter pub get
+          flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r docan-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
+          rm -rf Payload
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-ios
+          path: docan-*-ios-unsigned.ipa
+
+  # IOS - FINAR
+  build-ios-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (No Code Signing)
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
+          rm -rf Payload
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-ios
+          path: finar-*-ios-unsigned.ipa
+
+  # IOS - KLIT
+  build-ios-klit:
+    if: ${{ github.event.inputs.build_klit == 'true' }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/klit.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.klit_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.klit_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (No Code Signing)
+        run: |
+          flutter pub get
+          flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r klit-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
+          rm -rf Payload
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-ios
+          path: klit-*-ios-unsigned.ipa
+
+  # ============================================================================
   # WINDOWS BUILDS
   # ============================================================================
   
@@ -1920,6 +2213,10 @@ jobs:
   # ============================================================================
   create-release:
     needs: 
+      - build-ios-doudou
+      - build-ios-docan
+      - build-ios-finar
+      - build-ios-klit
       - build-windows-doudou
       - build-windows-docan
       - build-windows-finar
@@ -1949,6 +2246,116 @@ jobs:
         with:
           merge-multiple: true
 
+      - name: Generate SHA256 checksums
+        run: |
+          echo "Generating SHA256 checksums..."
+          # Create checksums file
+          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -exec sha256sum {} \; | sed 's|\./||' > SHA256SUMS.txt
+          echo "=== SHA256 Checksums ==="
+          cat SHA256SUMS.txt
+
+      - name: Generate build manifest JSON
+        id: manifest
+        run: |
+          BUILD_DATE=$(date +%Y-%m-%d)
+          BUILD_TIME=$(date +%H:%M:%S)
+          BUILD_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Start JSON
+          cat > build-manifest.json << 'JSONEOF'
+          {
+            "build_info": {
+              "run_number": ${{ github.run_number }},
+              "run_id": "${{ github.run_id }}",
+              "build_date": "BUILD_DATE_PLACEHOLDER",
+              "build_time": "BUILD_TIME_PLACEHOLDER",
+              "timestamp": "BUILD_TIMESTAMP_PLACEHOLDER",
+              "triggered_by": "${{ github.actor }}",
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}"
+            },
+            "requested_builds": {
+              "doudou": ${{ github.event.inputs.build_doudou }},
+              "docan": ${{ github.event.inputs.build_docan }},
+              "finar": ${{ github.event.inputs.build_finar }},
+              "klit": ${{ github.event.inputs.build_klit }},
+              "repstore": ${{ github.event.inputs.build_repstore }}
+            },
+            "artifacts": []
+          }
+          JSONEOF
+          
+          # Replace placeholders
+          sed -i "s/BUILD_DATE_PLACEHOLDER/$BUILD_DATE/g" build-manifest.json
+          sed -i "s/BUILD_TIME_PLACEHOLDER/$BUILD_TIME/g" build-manifest.json
+          sed -i "s/BUILD_TIMESTAMP_PLACEHOLDER/$BUILD_TIMESTAMP/g" build-manifest.json
+          
+          # Build artifacts array
+          ARTIFACTS_JSON="["
+          FIRST=true
+          
+          for file in $(find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) | sort); do
+            filename=$(basename "$file")
+            filesize=$(stat -c%s "$file")
+            filesize_human=$(du -h "$file" | cut -f1)
+            sha256=$(sha256sum "$file" | cut -d' ' -f1)
+            
+            # Determine platform and project from filename
+            platform="unknown"
+            project="unknown"
+            format="${filename##*.}"
+            
+            case "$filename" in
+              *-windows-*) platform="windows" ;;
+              *-macos-*) platform="macos" ;;
+              *-ios-*) platform="ios" ;;
+              *-linux-*) platform="linux" ;;
+              *-web*) platform="web" ;;
+              *.apk|*.aab) platform="android" ;;
+            esac
+            
+            case "$filename" in
+              doudou-*) project="doudou" ;;
+              docan-*) project="docan" ;;
+              finar-*) project="finar" ;;
+              klit-*) project="klit" ;;
+              repstore-*) project="repstore" ;;
+            esac
+            
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              ARTIFACTS_JSON="$ARTIFACTS_JSON,"
+            fi
+            
+            ARTIFACTS_JSON="$ARTIFACTS_JSON
+              {
+                \"filename\": \"$filename\",
+                \"project\": \"$project\",
+                \"platform\": \"$platform\",
+                \"format\": \"$format\",
+                \"size_bytes\": $filesize,
+                \"size_human\": \"$filesize_human\",
+                \"sha256\": \"$sha256\"
+              }"
+          done
+          
+          ARTIFACTS_JSON="$ARTIFACTS_JSON
+            ]"
+          
+          # Insert artifacts into JSON using jq if available, otherwise use sed
+          if command -v jq &> /dev/null; then
+            jq --argjson artifacts "$ARTIFACTS_JSON" '.artifacts = $artifacts' build-manifest.json > build-manifest-temp.json
+            mv build-manifest-temp.json build-manifest.json
+          else
+            # Fallback: replace empty artifacts array
+            sed -i "s/\"artifacts\": \[\]/\"artifacts\": $ARTIFACTS_JSON/g" build-manifest.json
+          fi
+          
+          echo "=== Build Manifest ==="
+          cat build-manifest.json
+
       - name: Generate build report
         id: report
         run: |
@@ -1958,17 +2365,18 @@ jobs:
           # Count artifacts
           APK_COUNT=$(find . -name "*.apk" 2>/dev/null | wc -l)
           AAB_COUNT=$(find . -name "*.aab" 2>/dev/null | wc -l)
+          IPA_COUNT=$(find . -name "*.ipa" 2>/dev/null | wc -l)
           ZIP_COUNT=$(find . -name "*.zip" 2>/dev/null | wc -l)
           DEB_COUNT=$(find . -name "*.deb" 2>/dev/null | wc -l)
           APPIMAGE_COUNT=$(find . -name "*.AppImage" 2>/dev/null | wc -l)
-          TOTAL_COUNT=$((APK_COUNT + AAB_COUNT + ZIP_COUNT + DEB_COUNT + APPIMAGE_COUNT))
+          TOTAL_COUNT=$((APK_COUNT + AAB_COUNT + IPA_COUNT + ZIP_COUNT + DEB_COUNT + APPIMAGE_COUNT))
           
           # List all artifacts with sizes
           echo "## 📦 Build Artifacts" > release_notes.md
           echo "" >> release_notes.md
           echo "| File | Size |" >> release_notes.md
           echo "|------|------|" >> release_notes.md
-          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.deb" -o -name "*.AppImage" \) -exec sh -c 'echo "| $(basename {}) | $(du -h {} | cut -f1) |"' \; >> release_notes.md
+          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -exec sh -c 'echo "| $(basename {}) | $(du -h {} | cut -f1) |"' \; >> release_notes.md
           
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
@@ -1983,6 +2391,7 @@ jobs:
           echo "| ⏰ Build Time | $BUILD_TIME UTC |" >> release_notes.md
           echo "| 📱 APKs | $APK_COUNT |" >> release_notes.md
           echo "| 📦 AABs | $AAB_COUNT |" >> release_notes.md
+          echo "| 🍎 IPAs | $IPA_COUNT |" >> release_notes.md
           echo "| 🗜️ ZIPs | $ZIP_COUNT |" >> release_notes.md
           echo "| 🐧 DEBs | $DEB_COUNT |" >> release_notes.md
           echo "| 🖼️ AppImages | $APPIMAGE_COUNT |" >> release_notes.md
@@ -2002,6 +2411,7 @@ jobs:
             echo "- Version: ${{ needs.build-android-doudou.outputs.version || needs.build-windows-doudou.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-doudou.outputs.status || 'skipped' }} ${{ needs.build-windows-doudou.outputs.duration && format('({0} min)', needs.build-windows-doudou.outputs.duration) || '' }}" >> release_notes.md
             echo "- macOS: ${{ needs.build-macos-doudou.outputs.status || 'skipped' }} ${{ needs.build-macos-doudou.outputs.duration && format('({0} min)', needs.build-macos-doudou.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- iOS: ${{ needs.build-ios-doudou.outputs.status || 'skipped' }} ${{ needs.build-ios-doudou.outputs.duration && format('({0} min)', needs.build-ios-doudou.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-doudou.outputs.status || 'skipped' }} ${{ needs.build-android-doudou.outputs.duration && format('({0} min)', needs.build-android-doudou.outputs.duration) || '' }} - Signing: ${{ needs.build-android-doudou.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-doudou.outputs.status || 'skipped' }} ${{ needs.build-linux-doudou.outputs.duration && format('({0} min)', needs.build-linux-doudou.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-doudou.outputs.status || 'skipped' }} ${{ needs.build-web-doudou.outputs.duration && format('({0} min)', needs.build-web-doudou.outputs.duration) || '' }}" >> release_notes.md
@@ -2014,6 +2424,7 @@ jobs:
             echo "- Version: ${{ needs.build-android-docan.outputs.version || needs.build-windows-docan.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-docan.outputs.status || 'skipped' }} ${{ needs.build-windows-docan.outputs.duration && format('({0} min)', needs.build-windows-docan.outputs.duration) || '' }}" >> release_notes.md
             echo "- macOS: ${{ needs.build-macos-docan.outputs.status || 'skipped' }} ${{ needs.build-macos-docan.outputs.duration && format('({0} min)', needs.build-macos-docan.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- iOS: ${{ needs.build-ios-docan.outputs.status || 'skipped' }} ${{ needs.build-ios-docan.outputs.duration && format('({0} min)', needs.build-ios-docan.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-docan.outputs.status || 'skipped' }} ${{ needs.build-android-docan.outputs.duration && format('({0} min)', needs.build-android-docan.outputs.duration) || '' }} - Signing: ${{ needs.build-android-docan.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-docan.outputs.status || 'skipped' }} ${{ needs.build-linux-docan.outputs.duration && format('({0} min)', needs.build-linux-docan.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-docan.outputs.status || 'skipped' }} ${{ needs.build-web-docan.outputs.duration && format('({0} min)', needs.build-web-docan.outputs.duration) || '' }}" >> release_notes.md
@@ -2026,6 +2437,7 @@ jobs:
             echo "- Version: ${{ needs.build-android-finar.outputs.version || needs.build-windows-finar.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-finar.outputs.status || 'skipped' }} ${{ needs.build-windows-finar.outputs.duration && format('({0} min)', needs.build-windows-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- macOS: ${{ needs.build-macos-finar.outputs.status || 'skipped' }} ${{ needs.build-macos-finar.outputs.duration && format('({0} min)', needs.build-macos-finar.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- iOS: ${{ needs.build-ios-finar.outputs.status || 'skipped' }} ${{ needs.build-ios-finar.outputs.duration && format('({0} min)', needs.build-ios-finar.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-finar.outputs.status || 'skipped' }} ${{ needs.build-android-finar.outputs.duration && format('({0} min)', needs.build-android-finar.outputs.duration) || '' }} - Signing: ${{ needs.build-android-finar.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-finar.outputs.status || 'skipped' }} ${{ needs.build-linux-finar.outputs.duration && format('({0} min)', needs.build-linux-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-finar.outputs.status || 'skipped' }} ${{ needs.build-web-finar.outputs.duration && format('({0} min)', needs.build-web-finar.outputs.duration) || '' }}" >> release_notes.md
@@ -2038,6 +2450,7 @@ jobs:
             echo "- Version: ${{ needs.build-android-klit.outputs.version || needs.build-windows-klit.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-klit.outputs.status || 'skipped' }} ${{ needs.build-windows-klit.outputs.duration && format('({0} min)', needs.build-windows-klit.outputs.duration) || '' }}" >> release_notes.md
             echo "- macOS: ${{ needs.build-macos-klit.outputs.status || 'skipped' }} ${{ needs.build-macos-klit.outputs.duration && format('({0} min)', needs.build-macos-klit.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- iOS: ${{ needs.build-ios-klit.outputs.status || 'skipped' }} ${{ needs.build-ios-klit.outputs.duration && format('({0} min)', needs.build-ios-klit.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-klit.outputs.status || 'skipped' }} ${{ needs.build-android-klit.outputs.duration && format('({0} min)', needs.build-android-klit.outputs.duration) || '' }} - Signing: ${{ needs.build-android-klit.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-klit.outputs.status || 'skipped' }} ${{ needs.build-linux-klit.outputs.duration && format('({0} min)', needs.build-linux-klit.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-klit.outputs.status || 'skipped' }} ${{ needs.build-web-klit.outputs.duration && format('({0} min)', needs.build-web-klit.outputs.duration) || '' }}" >> release_notes.md
@@ -2061,6 +2474,10 @@ jobs:
           
           # Check for failed builds
           FAILED_BUILDS=""
+          if [ "${{ needs.build-ios-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-iOS"; fi
+          if [ "${{ needs.build-ios-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-iOS"; fi
+          if [ "${{ needs.build-ios-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-iOS"; fi
+          if [ "${{ needs.build-ios-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-iOS"; fi
           if [ "${{ needs.build-windows-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Windows"; fi
           if [ "${{ needs.build-windows-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Windows"; fi
           if [ "${{ needs.build-windows-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Windows"; fi
@@ -2101,8 +2518,8 @@ jobs:
             echo "" >> release_notes.md
           fi
           
-          # Note about macOS unsigned builds
-          echo "🍎 **macOS builds are unsigned** - Users will need to right-click and select 'Open' to bypass Gatekeeper, or run \`xattr -cr /path/to/App.app\` in Terminal." >> release_notes.md
+          # Note about macOS and iOS unsigned builds
+          echo "🍎 **macOS and iOS builds are unsigned** - macOS: Users need to right-click and select 'Open' to bypass Gatekeeper, or run \`xattr -cr /path/to/App.app\`. iOS: IPAs require sideloading with AltStore, Sideloadly, or a signing service." >> release_notes.md
           echo "" >> release_notes.md
           
           if [ -z "$FAILED_BUILDS" ] && [ -z "$DEBUG_SIGNED" ]; then
@@ -2118,9 +2535,21 @@ jobs:
           echo "|----------|---------|--------------|" >> release_notes.md
           echo "| Windows | ZIP | x64 |" >> release_notes.md
           echo "| macOS | ZIP (unsigned) | arm64/x64 |" >> release_notes.md
+          echo "| iOS | IPA (unsigned) | arm64 |" >> release_notes.md
           echo "| Android | APK, AAB | arm64-v8a, armeabi-v7a, x86_64 |" >> release_notes.md
           echo "| Linux | ZIP, DEB, AppImage | x86_64 |" >> release_notes.md
           echo "| Web | ZIP | Universal |" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## 🔐 Verification" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "SHA256 checksums are provided in \`SHA256SUMS.txt\`. To verify a download:" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "sha256sum -c SHA256SUMS.txt --ignore-missing" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Build metadata is available in \`build-manifest.json\`." >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
           echo "" >> release_notes.md
@@ -2141,5 +2570,8 @@ jobs:
             *.zip
             *.apk
             *.aab
+            *.ipa
             *.deb
             *.AppImage
+            SHA256SUMS.txt
+            build-manifest.json
