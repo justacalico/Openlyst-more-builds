@@ -406,6 +406,47 @@ jobs:
           $filename = "doudou-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
 
+      - name: Create Inno Setup Script
+        run: |
+          @"
+          [Setup]
+          AppName=Doudou
+          AppVersion=${{ steps.version.outputs.version }}
+          AppPublisher=Openlyst
+          DefaultDirName={autopf}\Doudou
+          DefaultGroupName=Doudou
+          OutputDir=.
+          OutputBaseFilename=doudou-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
+          Compression=lzma2
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64compatible
+          WizardStyle=modern
+          SetupIconFile=build\windows\x64\runner\Release\doudou.exe
+          UninstallDisplayIcon={app}\doudou.exe
+          PrivilegesRequired=lowest
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\Doudou"; Filename: "{app}\doudou.exe"
+          Name: "{group}\{cm:UninstallProgram,Doudou}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\Doudou"; Filename: "{app}\doudou.exe"; Tasks: desktopicon
+          
+          [Run]
+          Filename: "{app}\doudou.exe"; Description: "{cm:LaunchProgram,Doudou}"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Build Windows Installer
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+
       - name: Record duration and status
         id: duration
         if: always()
@@ -421,11 +462,17 @@ jobs:
           echo "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
           echo "warnings=${{ steps.build.outputs.warnings }}" >> $env:GITHUB_OUTPUT
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: doudou-windows-x64
+          name: doudou-windows-x64-zip
           path: doudou-*-windows-x64.zip
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-windows-x64-installer
+          path: doudou-*-windows-x64-setup.exe
 
   # 2. BUILD WINDOWS - DOCAN (x64)
   build-windows-docan:
@@ -472,6 +519,47 @@ jobs:
           $filename = "docan-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
 
+      - name: Create Inno Setup Script
+        run: |
+          @"
+          [Setup]
+          AppName=Docan
+          AppVersion=${{ steps.version.outputs.version }}
+          AppPublisher=Openlyst
+          DefaultDirName={autopf}\Docan
+          DefaultGroupName=Docan
+          OutputDir=.
+          OutputBaseFilename=docan-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
+          Compression=lzma2
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64compatible
+          WizardStyle=modern
+          SetupIconFile=build\windows\x64\runner\Release\docan.exe
+          UninstallDisplayIcon={app}\docan.exe
+          PrivilegesRequired=lowest
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\Docan"; Filename: "{app}\docan.exe"
+          Name: "{group}\{cm:UninstallProgram,Docan}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\Docan"; Filename: "{app}\docan.exe"; Tasks: desktopicon
+          
+          [Run]
+          Filename: "{app}\docan.exe"; Description: "{cm:LaunchProgram,Docan}"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Build Windows Installer
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+
       - name: Record duration and status
         id: duration
         if: always()
@@ -485,11 +573,17 @@ jobs:
         if: always()
         run: echo "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: docan-windows-x64
+          name: docan-windows-x64-zip
           path: docan-*-windows-x64.zip
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-windows-x64-installer
+          path: docan-*-windows-x64-setup.exe
 
   # 3. BUILD WINDOWS - FINAR (x64)
   build-windows-finar:
@@ -537,6 +631,47 @@ jobs:
           $filename = "finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
 
+      - name: Create Inno Setup Script
+        run: |
+          @"
+          [Setup]
+          AppName=Finar
+          AppVersion=${{ steps.version.outputs.version }}
+          AppPublisher=Openlyst
+          DefaultDirName={autopf}\Finar
+          DefaultGroupName=Finar
+          OutputDir=.
+          OutputBaseFilename=finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
+          Compression=lzma2
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64compatible
+          WizardStyle=modern
+          SetupIconFile=build\windows\x64\runner\Release\finar.exe
+          UninstallDisplayIcon={app}\finar.exe
+          PrivilegesRequired=lowest
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\Finar"; Filename: "{app}\finar.exe"
+          Name: "{group}\{cm:UninstallProgram,Finar}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\Finar"; Filename: "{app}\finar.exe"; Tasks: desktopicon
+          
+          [Run]
+          Filename: "{app}\finar.exe"; Description: "{cm:LaunchProgram,Finar}"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Build Windows Installer
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+
       - name: Record duration and status
         id: duration
         if: always()
@@ -550,11 +685,17 @@ jobs:
         if: always()
         run: echo "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: finar-windows-x64
+          name: finar-windows-x64-zip
           path: finar-*-windows-x64.zip
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-windows-x64-installer
+          path: finar-*-windows-x64-setup.exe
 
   # 4. BUILD WINDOWS - KLIT (x64)
   build-windows-klit:
@@ -601,6 +742,47 @@ jobs:
           $filename = "klit-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
 
+      - name: Create Inno Setup Script
+        run: |
+          @"
+          [Setup]
+          AppName=Klit
+          AppVersion=${{ steps.version.outputs.version }}
+          AppPublisher=Openlyst
+          DefaultDirName={autopf}\Klit
+          DefaultGroupName=Klit
+          OutputDir=.
+          OutputBaseFilename=klit-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
+          Compression=lzma2
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64compatible
+          WizardStyle=modern
+          SetupIconFile=build\windows\x64\runner\Release\klit.exe
+          UninstallDisplayIcon={app}\klit.exe
+          PrivilegesRequired=lowest
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\Klit"; Filename: "{app}\klit.exe"
+          Name: "{group}\{cm:UninstallProgram,Klit}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\Klit"; Filename: "{app}\klit.exe"; Tasks: desktopicon
+          
+          [Run]
+          Filename: "{app}\klit.exe"; Description: "{cm:LaunchProgram,Klit}"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Build Windows Installer
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+
       - name: Record duration and status
         id: duration
         if: always()
@@ -614,11 +796,17 @@ jobs:
         if: always()
         run: echo "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: klit-windows-x64
+          name: klit-windows-x64-zip
           path: klit-*-windows-x64.zip
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-windows-x64-installer
+          path: klit-*-windows-x64-setup.exe
 
   # ============================================================================
   # MACOS BUILDS (No Code Signing)
@@ -2248,21 +2436,22 @@ jobs:
 
       - name: Flatten artifacts directory
         run: |
-          # Move .deb and .AppImage files from artifacts/ to root directory
+          # Move .deb, .AppImage, and .exe files from artifacts/ to root directory
           if [ -d "artifacts" ]; then
             find artifacts -name "*.deb" -exec mv {} . \; 2>/dev/null || true
             find artifacts -name "*.AppImage" -exec mv {} . \; 2>/dev/null || true
+            find artifacts -name "*.exe" -exec mv {} . \; 2>/dev/null || true
             rm -rf artifacts
           fi
           echo "=== Files available for release ==="
-          ls -la *.zip *.apk *.aab *.ipa *.deb *.AppImage 2>/dev/null || echo "Listing files..."
-          find . -maxdepth 1 -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -ls
+          ls -la *.zip *.apk *.aab *.ipa *.deb *.AppImage *.exe 2>/dev/null || echo "Listing files..."
+          find . -maxdepth 1 -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) -ls
 
       - name: Generate SHA256 checksums
         run: |
           echo "Generating SHA256 checksums..."
           # Create checksums file
-          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -exec sha256sum {} \; | sed 's|\./||' > SHA256SUMS.txt
+          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) -exec sha256sum {} \; | sed 's|\./||' > SHA256SUMS.txt
           echo "=== SHA256 Checksums ==="
           cat SHA256SUMS.txt
 
@@ -2307,7 +2496,7 @@ jobs:
           ARTIFACTS_JSON="["
           FIRST=true
           
-          for file in $(find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) | sort); do
+          for file in $(find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) | sort); do
             filename=$(basename "$file")
             filesize=$(stat -c%s "$file")
             filesize_human=$(du -h "$file" | cut -f1)
@@ -2381,14 +2570,15 @@ jobs:
           ZIP_COUNT=$(find . -name "*.zip" 2>/dev/null | wc -l)
           DEB_COUNT=$(find . -name "*.deb" 2>/dev/null | wc -l)
           APPIMAGE_COUNT=$(find . -name "*.AppImage" 2>/dev/null | wc -l)
-          TOTAL_COUNT=$((APK_COUNT + AAB_COUNT + IPA_COUNT + ZIP_COUNT + DEB_COUNT + APPIMAGE_COUNT))
+          EXE_COUNT=$(find . -name "*.exe" 2>/dev/null | wc -l)
+          TOTAL_COUNT=$((APK_COUNT + AAB_COUNT + IPA_COUNT + ZIP_COUNT + DEB_COUNT + APPIMAGE_COUNT + EXE_COUNT))
           
           # List all artifacts with sizes
           echo "## 📦 Build Artifacts" > release_notes.md
           echo "" >> release_notes.md
           echo "| File | Size |" >> release_notes.md
           echo "|------|------|" >> release_notes.md
-          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" \) -exec sh -c 'echo "| $(basename {}) | $(du -h {} | cut -f1) |"' \; >> release_notes.md
+          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) -exec sh -c 'echo "| $(basename {}) | $(du -h {} | cut -f1) |"' \; >> release_notes.md
           
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
@@ -2405,6 +2595,7 @@ jobs:
           echo "| 📦 AABs | $AAB_COUNT |" >> release_notes.md
           echo "| 🍎 IPAs | $IPA_COUNT |" >> release_notes.md
           echo "| 🗜️ ZIPs | $ZIP_COUNT |" >> release_notes.md
+          echo "| 🪟 Installers (EXE) | $EXE_COUNT |" >> release_notes.md
           echo "| 🐧 DEBs | $DEB_COUNT |" >> release_notes.md
           echo "| 🖼️ AppImages | $APPIMAGE_COUNT |" >> release_notes.md
           echo "| **Total Artifacts** | **$TOTAL_COUNT** |" >> release_notes.md
@@ -2545,7 +2736,7 @@ jobs:
           echo "" >> release_notes.md
           echo "| Platform | Formats | Architecture |" >> release_notes.md
           echo "|----------|---------|--------------|" >> release_notes.md
-          echo "| Windows | ZIP | x64 |" >> release_notes.md
+          echo "| Windows | ZIP, EXE Installer | x64 |" >> release_notes.md
           echo "| macOS | ZIP (unsigned) | arm64/x64 |" >> release_notes.md
           echo "| iOS | IPA (unsigned) | arm64 |" >> release_notes.md
           echo "| Android | APK, AAB | arm64-v8a, armeabi-v7a, x86_64 |" >> release_notes.md
@@ -2585,5 +2776,6 @@ jobs:
             *.ipa
             *.deb
             *.AppImage
+            *.exe
             SHA256SUMS.txt
             build-manifest.json
