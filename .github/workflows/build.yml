@@ -421,7 +421,6 @@ jobs:
           SolidCompression=yes
           ArchitecturesInstallIn64BitMode=x64compatible
           WizardStyle=modern
-          SetupIconFile=build\windows\x64\runner\Release\doudou.exe
           UninstallDisplayIcon={app}\doudou.exe
           PrivilegesRequired=lowest
           
@@ -534,7 +533,6 @@ jobs:
           SolidCompression=yes
           ArchitecturesInstallIn64BitMode=x64compatible
           WizardStyle=modern
-          SetupIconFile=build\windows\x64\runner\Release\docan.exe
           UninstallDisplayIcon={app}\docan.exe
           PrivilegesRequired=lowest
           
@@ -646,7 +644,6 @@ jobs:
           SolidCompression=yes
           ArchitecturesInstallIn64BitMode=x64compatible
           WizardStyle=modern
-          SetupIconFile=build\windows\x64\runner\Release\finar.exe
           UninstallDisplayIcon={app}\finar.exe
           PrivilegesRequired=lowest
           
@@ -757,7 +754,6 @@ jobs:
           SolidCompression=yes
           ArchitecturesInstallIn64BitMode=x64compatible
           WizardStyle=modern
-          SetupIconFile=build\windows\x64\runner\Release\klit.exe
           UninstallDisplayIcon={app}\klit.exe
           PrivilegesRequired=lowest
           
