@@ -2,51 +2,81 @@ name: Manual Multi-Platform Build
 on:
   workflow_dispatch:
     inputs:
+      # Doudou
       build_doudou:
         description: 'Build Doudou'
         required: false
         type: boolean
         default: false
+      doudou_platforms:
+        description: 'Doudou platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android'
       doudou_commit_hash:
         description: 'Doudou commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      # Docan
       build_docan:
         description: 'Build Docan'
         required: false
         type: boolean
         default: false
+      docan_platforms:
+        description: 'Docan platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android'
       docan_commit_hash:
         description: 'Docan commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      # Finar
       build_finar:
         description: 'Build Finar'
         required: false
         type: boolean
         default: false
+      finar_platforms:
+        description: 'Finar platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android'
       finar_commit_hash:
         description: 'Finar commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      # Klit
       build_klit:
         description: 'Build Klit'
         required: false
         type: boolean
         default: false
+      klit_platforms:
+        description: 'Klit platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android'
       klit_commit_hash:
         description: 'Klit commit hash (leave empty for latest)'
         required: false
         type: string
         default: ''
+      # Repstore
       build_repstore:
         description: 'Build Repstore'
         required: false
         type: boolean
         default: false
+      repstore_platforms:
+        description: 'Repstore platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android'
       repstore_commit_hash:
         description: 'Repstore commit hash (leave empty for latest)'
         required: false
@@ -66,7 +96,7 @@ jobs:
 
   # IOS - DOUDOU
   build-ios-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'ios') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -94,8 +124,13 @@ jobs:
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source $HOME/.cargo/env
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install iOS Rust targets
+        run: |
           rustup target add aarch64-apple-ios
+          rustup target add x86_64-apple-ios
+          rustup target add aarch64-apple-ios-sim
 
       - name: Get version from pubspec
         id: version
@@ -104,12 +139,6 @@ jobs:
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-
-      - name: Build Rust library for iOS
-        run: |
-          source $HOME/.cargo/env
-          cd rust
-          cargo build --release --target aarch64-apple-ios
 
       - name: Build iOS (No Code Signing)
         run: |
@@ -150,7 +179,7 @@ jobs:
 
   # IOS - DOCAN
   build-ios-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'ios') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -222,7 +251,7 @@ jobs:
 
   # IOS - FINAR
   build-ios-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'ios') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -295,7 +324,7 @@ jobs:
 
   # IOS - KLIT
   build-ios-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'ios') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -371,7 +400,7 @@ jobs:
   
   # 1. BUILD WINDOWS - DOUDOU (x64)
   build-windows-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'windows') }}
     runs-on: windows-latest
     continue-on-error: true
     outputs:
@@ -487,7 +516,7 @@ jobs:
 
   # 2. BUILD WINDOWS - DOCAN (x64)
   build-windows-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'windows') }}
     runs-on: windows-latest
     continue-on-error: true
     outputs:
@@ -597,7 +626,7 @@ jobs:
 
   # 3. BUILD WINDOWS - FINAR (x64)
   build-windows-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'windows') }}
     runs-on: windows-latest
     continue-on-error: true
     outputs:
@@ -708,7 +737,7 @@ jobs:
 
   # 4. BUILD WINDOWS - KLIT (x64)
   build-windows-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'windows') }}
     runs-on: windows-latest
     continue-on-error: true
     outputs:
@@ -822,7 +851,7 @@ jobs:
 
   # MACOS - DOUDOU
   build-macos-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'macos') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -905,7 +934,7 @@ jobs:
 
   # MACOS - DOCAN
   build-macos-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'macos') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -979,7 +1008,7 @@ jobs:
 
   # MACOS - FINAR
   build-macos-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'macos') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -1054,7 +1083,7 @@ jobs:
 
   # MACOS - KLIT
   build-macos-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'macos') }}
     runs-on: macos-latest
     continue-on-error: true
     outputs:
@@ -1132,7 +1161,7 @@ jobs:
 
   # ANDROID - DOUDOU
   build-android-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -1234,7 +1263,7 @@ jobs:
 
   # ANDROID - DOCAN
   build-android-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -1336,7 +1365,7 @@ jobs:
 
   # ANDROID - FINAR
   build-android-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -1439,7 +1468,7 @@ jobs:
 
   # ANDROID - KLIT
   build-android-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -1541,7 +1570,7 @@ jobs:
 
   # ANDROID - REPSTORE
   build-android-repstore:
-    if: ${{ github.event.inputs.build_repstore == 'true' }}
+    if: ${{ github.event.inputs.build_repstore == 'true' && contains(github.event.inputs.repstore_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -1648,7 +1677,7 @@ jobs:
 
   # LINUX - DOUDOU
   build-linux-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'linux') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -1770,7 +1799,7 @@ jobs:
 
   # LINUX - DOCAN
   build-linux-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'linux') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -1892,7 +1921,7 @@ jobs:
 
   # LINUX - FINAR
   build-linux-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'linux') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -2015,7 +2044,7 @@ jobs:
 
   # LINUX - KLIT
   build-linux-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'linux') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -2141,7 +2170,7 @@ jobs:
 
   # WEB - DOUDOU
   build-web-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'web') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -2207,7 +2236,7 @@ jobs:
 
   # WEB - DOCAN
   build-web-docan:
-    if: ${{ github.event.inputs.build_docan == 'true' }}
+    if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'web') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -2273,7 +2302,7 @@ jobs:
 
   # WEB - FINAR
   build-web-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' }}
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'web') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
@@ -2340,7 +2369,7 @@ jobs:
 
   # WEB - KLIT
   build-web-klit:
-    if: ${{ github.event.inputs.build_klit == 'true' }}
+    if: ${{ github.event.inputs.build_klit == 'true' && contains(github.event.inputs.klit_platforms, 'web') }}
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
