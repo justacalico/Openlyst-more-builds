@@ -1,4 +1,4 @@
-name: Manual Windows Build
+name: Manual Multi-Platform Build
 on:
   workflow_dispatch:
     inputs:
@@ -46,7 +46,14 @@ on:
 permissions:
   contents: write
 
+env:
+  FLUTTER_VERSION: 'stable'
+
 jobs:
+  # ============================================================================
+  # WINDOWS BUILDS
+  # ============================================================================
+  
   # 1. BUILD WINDOWS - DOUDOU (x64)
   build-windows-doudou:
     if: ${{ github.event.inputs.build_doudou == 'true' }}
@@ -176,9 +183,762 @@ jobs:
           name: klit-windows-x64
           path: klit-windows-x64.zip
 
-  # 5. CREATE GITHUB RELEASE
+  # ============================================================================
+  # ANDROID BUILDS (APK + AAB)
+  # ============================================================================
+
+  # ANDROID - DOUDOU
+  build-android-doudou:
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Android signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.DOUDOU_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.DOUDOU_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.DOUDOU_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.DOUDOU_KEY_ALIAS }}
+        run: |
+          echo "Setting up release signing..."
+          mkdir -p android/keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=keystore/upload-keystore.jks
+          EOF
+          echo "Release signing configured"
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/flutter-apk/app-release.apk doudou-release.apk
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/bundle/release/app-release.aab doudou-release.aab
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-android
+          path: |
+            doudou-release.apk
+            doudou-release.aab
+
+  # ANDROID - DOCAN
+  build-android-docan:
+    if: ${{ github.event.inputs.build_docan == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/docan.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.docan_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.docan_commit_hash }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Android signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.DOCAN_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.DOCAN_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.DOCAN_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.DOCAN_KEY_ALIAS }}
+        run: |
+          echo "Setting up release signing..."
+          mkdir -p android/keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=keystore/upload-keystore.jks
+          EOF
+          echo "Release signing configured"
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/flutter-apk/app-release.apk docan-release.apk
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/bundle/release/app-release.aab docan-release.aab
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-android
+          path: |
+            docan-release.apk
+            docan-release.aab
+
+  # ANDROID - FINAR
+  build-android-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Android signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.FINAR_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FINAR_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.FINAR_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.FINAR_KEY_ALIAS }}
+        run: |
+          echo "Setting up release signing..."
+          mkdir -p android/app/keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/keystore/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=keystore/upload-keystore.jks
+          EOF
+          echo "Release signing configured"
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/flutter-apk/app-release.apk finar-release.apk
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/bundle/release/app-release.aab finar-release.aab
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-android
+          path: |
+            finar-release.apk
+            finar-release.aab
+
+  # ANDROID - KLIT
+  build-android-klit:
+    if: ${{ github.event.inputs.build_klit == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/klit.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.klit_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.klit_commit_hash }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Android signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.KLIT_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.KLIT_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.KLIT_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.KLIT_KEY_ALIAS }}
+        run: |
+          echo "Setting up release signing..."
+          mkdir -p android/keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=../keystore/upload-keystore.jks
+          EOF
+          echo "Release signing configured"
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/flutter-apk/app-release.apk klit-release.apk
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/bundle/release/app-release.aab klit-release.aab
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-android
+          path: |
+            klit-release.apk
+            klit-release.aab
+
+  # ============================================================================
+  # LINUX BUILDS (ZIP, AppImage, DEB)
+  # ============================================================================
+
+  # LINUX - DOUDOU
+  build-linux-doudou:
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libmpv-dev dpkg-dev wget file squashfs-tools
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool.AppImage
+          cd /tmp && ./appimagetool.AppImage --appimage-extract
+          sudo mv /tmp/squashfs-root /opt/appimagetool
+          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build/linux/x64/release
+          zip -r $GITHUB_WORKSPACE/doudou-${{ steps.version.outputs.version }}-linux-x64.zip bundle/
+
+      - name: Install fastforge and build packages
+        run: |
+          dart pub global activate fastforge
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          
+          # Build DEB
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets deb || true
+          mkdir -p artifacts
+          find dist -name "*.deb" -exec cp {} artifacts/doudou-linux-amd64.deb \; 2>/dev/null || true
+          
+          # Build AppImage
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets appimage || true
+          find dist -name "*.AppImage" -exec cp {} artifacts/doudou-linux-x86_64.AppImage \; 2>/dev/null || true
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-linux
+          path: |
+            doudou-*-linux-x64.zip
+            artifacts/
+
+  # LINUX - DOCAN
+  build-linux-docan:
+    if: ${{ github.event.inputs.build_docan == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/docan.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.docan_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.docan_commit_hash }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev dpkg-dev wget file squashfs-tools
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool.AppImage
+          cd /tmp && ./appimagetool.AppImage --appimage-extract
+          sudo mv /tmp/squashfs-root /opt/appimagetool
+          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build/linux/x64/release
+          zip -r $GITHUB_WORKSPACE/docan-${{ steps.version.outputs.version }}-linux-x64.zip bundle/
+
+      - name: Install fastforge and build packages
+        run: |
+          dart pub global activate flutter_distributor
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          
+          # Build DEB
+          $HOME/.pub-cache/bin/flutter_distributor package --platform linux --targets deb --skip-clean || true
+          mkdir -p artifacts
+          find dist -name "*.deb" -exec cp {} artifacts/docan-linux-amd64.deb \; 2>/dev/null || true
+          
+          # Build AppImage
+          $HOME/.pub-cache/bin/flutter_distributor package --platform linux --targets appimage --skip-clean || true
+          find dist -name "*.AppImage" -exec cp {} artifacts/docan-linux-x86_64.AppImage \; 2>/dev/null || true
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-linux
+          path: |
+            docan-*-linux-x64.zip
+            artifacts/
+
+  # LINUX - FINAR
+  build-linux-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libmpv-dev dpkg-dev wget file squashfs-tools
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool.AppImage
+          cd /tmp && ./appimagetool.AppImage --appimage-extract
+          sudo mv /tmp/squashfs-root /opt/appimagetool
+          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build/linux/x64/release
+          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-linux-x64.zip bundle/
+
+      - name: Install fastforge and build packages
+        run: |
+          dart pub global activate fastforge
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          
+          # Build DEB
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets deb || true
+          mkdir -p artifacts
+          find dist -name "*.deb" -exec cp {} artifacts/finar-linux-amd64.deb \; 2>/dev/null || true
+          
+          # Build AppImage
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets appimage || true
+          find dist -name "*.AppImage" -exec cp {} artifacts/finar-linux-x86_64.AppImage \; 2>/dev/null || true
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-linux
+          path: |
+            finar-*-linux-x64.zip
+            artifacts/
+
+  # LINUX - KLIT
+  build-linux-klit:
+    if: ${{ github.event.inputs.build_klit == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/klit.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.klit_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.klit_commit_hash }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libmpv-dev dpkg-dev wget file squashfs-tools
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool.AppImage
+          cd /tmp && ./appimagetool.AppImage --appimage-extract
+          sudo mv /tmp/squashfs-root /opt/appimagetool
+          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build/linux/x64/release
+          zip -r $GITHUB_WORKSPACE/klit-${{ steps.version.outputs.version }}-linux-x64.zip bundle/
+
+      - name: Install fastforge and build packages
+        run: |
+          dart pub global activate fastforge
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          
+          # Build DEB
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets deb || true
+          mkdir -p artifacts
+          find dist -name "*.deb" -exec cp {} artifacts/klit-linux-amd64.deb \; 2>/dev/null || true
+          
+          # Build AppImage
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets appimage || true
+          find dist -name "*.AppImage" -exec cp {} artifacts/klit-linux-x86_64.AppImage \; 2>/dev/null || true
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-linux
+          path: |
+            klit-*-linux-x64.zip
+            artifacts/
+
+  # ============================================================================
+  # WEB BUILDS
+  # ============================================================================
+
+  # WEB - DOUDOU
+  build-web-doudou:
+    if: ${{ github.event.inputs.build_doudou == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/doudou.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r $GITHUB_WORKSPACE/doudou-${{ steps.version.outputs.version }}-web.zip web/
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doudou-web
+          path: doudou-*-web.zip
+
+  # WEB - DOCAN
+  build-web-docan:
+    if: ${{ github.event.inputs.build_docan == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/docan.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.docan_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.docan_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r $GITHUB_WORKSPACE/docan-${{ steps.version.outputs.version }}-web.zip web/
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docan-web
+          path: docan-*-web.zip
+
+  # WEB - FINAR
+  build-web-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-web.zip web/
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-web
+          path: finar-*-web.zip
+
+  # WEB - KLIT
+  build-web-klit:
+    if: ${{ github.event.inputs.build_klit == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/klit.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.klit_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.klit_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r $GITHUB_WORKSPACE/klit-${{ steps.version.outputs.version }}-web.zip web/
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: klit-web
+          path: klit-*-web.zip
+
+  # ============================================================================
+  # CREATE GITHUB RELEASE
+  # ============================================================================
   create-release:
-    needs: [build-windows-doudou, build-windows-docan, build-windows-finar, build-windows-klit]
+    needs: 
+      - build-windows-doudou
+      - build-windows-docan
+      - build-windows-finar
+      - build-windows-klit
+      - build-android-doudou
+      - build-android-docan
+      - build-android-finar
+      - build-android-klit
+      - build-linux-doudou
+      - build-linux-docan
+      - build-linux-finar
+      - build-linux-klit
+      - build-web-doudou
+      - build-web-docan
+      - build-web-finar
+      - build-web-klit
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     steps:
@@ -187,11 +947,31 @@ jobs:
         with:
           merge-multiple: true
 
+      - name: List artifacts
+        run: find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.deb" -o -name "*.AppImage" \)
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Build ${{ github.run_number }}
-          body: "Automated build. Platform: Windows x64."
+          body: |
+            Automated multi-platform build.
+            
+            **Platforms included:**
+            - Windows x64
+            - Android (APK + AAB)
+            - Linux (ZIP, AppImage, DEB)
+            - Web (ZIP)
+            
+            **Required secrets for Android signing:**
+            - `<PROJECT>_KEYSTORE_BASE64` - Base64 encoded .jks keystore file
+            - `<PROJECT>_KEYSTORE_PASSWORD` - Keystore password
+            - `<PROJECT>_KEY_PASSWORD` - Key password
+            - `<PROJECT>_KEY_ALIAS` - Key alias
           files: |
             *.zip
+            *.apk
+            *.aab
+            *.deb
+            *.AppImage
