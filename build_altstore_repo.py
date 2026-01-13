@@ -119,29 +119,26 @@ class AltStoreRepoBuilder:
         """Extract iOS IPA download URL from version data"""
         if not isinstance(version, dict):
             return None
-            
-        # Handle different API response structures
+        
+        # Primary: Check downloads.iOS (direct string URL)
         downloads = version.get('downloads')
         if isinstance(downloads, dict):
-            ios_downloads = downloads.get('iOS', {})
-            if isinstance(ios_downloads, dict):
-                ipa_url = ios_downloads.get('ipa') or ios_downloads.get('url')
-                if ipa_url:
-                    return ipa_url
+            ios_download = downloads.get('iOS')
+            # iOS download can be a string URL or empty string
+            if isinstance(ios_download, str) and ios_download.strip():
+                return ios_download.strip()
         
-        # Try platformInstall as fallback
+        # Fallback: Check platformInstall.iOS (might contain URL or text)
         platform_install = version.get('platformInstall')
         if isinstance(platform_install, dict):
             ios_install = platform_install.get('iOS')
-            if isinstance(ios_install, dict):
-                ipa_url = ios_install.get('ipa') or ios_install.get('url')
-                if ipa_url:
-                    return ipa_url
+            if isinstance(ios_install, str) and ios_install.strip() and ios_install.startswith('http'):
+                return ios_install.strip()
         
-        # Try direct downloadURL field
+        # Last fallback: Try direct downloadURL field
         download_url = version.get('downloadURL')
-        if download_url and isinstance(download_url, str):
-            return download_url
+        if download_url and isinstance(download_url, str) and download_url.strip().startswith('http'):
+            return download_url.strip()
         
         return None
     
