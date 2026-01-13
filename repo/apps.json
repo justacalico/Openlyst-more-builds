@@ -2,8 +2,8 @@
   "name": "RepStore",
   "subtitle": "Free and open source iOS applications",
   "description": "A curated collection of free and open source iOS applications from OpenLyst.",
-  "iconURL": "https://repo.openlyst.ink/icon.png",
-  "headerURL": "https://repo.openlyst.ink/header.png",
+  "iconURL": "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/icon.png",
+  "headerURL": "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/header.png",
   "website": "https://openlyst.ink",
   "tintColor": "#dc2626",
   "featuredApps": [
