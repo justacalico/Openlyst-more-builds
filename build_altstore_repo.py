@@ -90,7 +90,11 @@ class OpenLystClient:
             
             data = response.json()
             if data.get('success'):
-                return data.get('data', [])
+                versions = data.get('data', [])
+                logger.debug(f"Fetched {len(versions) if isinstance(versions, list) else '?'} versions for {slug}")
+                if versions and logger.level == logging.DEBUG:
+                    logger.debug(f"Sample version structure: {str(versions[0])[:200]}")
+                return versions if isinstance(versions, list) else []
             return []
                 
         except requests.RequestException as e:
@@ -113,17 +117,33 @@ class AltStoreRepoBuilder:
     
     def extract_ipa_url(self, version: Dict) -> Optional[str]:
         """Extract iOS IPA download URL from version data"""
-        downloads = version.get('downloads', {})
-        ios_downloads = downloads.get('iOS', {})
+        if not isinstance(version, dict):
+            return None
+            
+        # Handle different API response structures
+        downloads = version.get('downloads')
+        if isinstance(downloads, dict):
+            ios_downloads = downloads.get('iOS', {})
+            if isinstance(ios_downloads, dict):
+                ipa_url = ios_downloads.get('ipa') or ios_downloads.get('url')
+                if ipa_url:
+                    return ipa_url
         
-        # Try different possible IPA locations
-        ipa_url = (
-            ios_downloads.get('ipa') or
-            ios_downloads.get('url') or
-            version.get('downloadURL')
-        )
+        # Try platformInstall as fallback
+        platform_install = version.get('platformInstall')
+        if isinstance(platform_install, dict):
+            ios_install = platform_install.get('iOS')
+            if isinstance(ios_install, dict):
+                ipa_url = ios_install.get('ipa') or ios_install.get('url')
+                if ipa_url:
+                    return ipa_url
         
-        return ipa_url
+        # Try direct downloadURL field
+        download_url = version.get('downloadURL')
+        if download_url and isinstance(download_url, str):
+            return download_url
+        
+        return None
     
     def get_file_size(self, url: str) -> Optional[int]:
         """Get file size from URL without downloading"""
@@ -144,21 +164,30 @@ class AltStoreRepoBuilder:
                 logger.warning(f"No versions found for app {slug}")
                 return None
             
+            # Ensure versions is a list
+            if not isinstance(versions, list):
+                logger.warning(f"Versions for {slug} is not a list: {type(versions)}")
+                return None
+            
             # Build version entries (AltStore expects newest first)
             altstore_versions = []
             for version_data in versions[:10]:  # Limit to last 10 versions
+                if not isinstance(version_data, dict):
+                    logger.warning(f"Version entry for {slug} is not a dict: {type(version_data)}")
+                    continue
+                
                 ipa_url = self.extract_ipa_url(version_data)
                 
                 if not ipa_url:
-                    logger.warning(f"No IPA URL found for {slug} version {version_data.get('version')}")
+                    logger.debug(f"No IPA URL found for {slug} version {version_data.get('version')}")
                     continue
                 
                 size = self.get_file_size(ipa_url)
                 
                 altstore_version = {
-                    "version": version_data.get('version', '1.0'),
-                    "buildVersion": version_data.get('buildVersion', '1'),
-                    "date": version_data.get('date', datetime.now().isoformat()),
+                    "version": str(version_data.get('version', '1.0')),
+                    "buildVersion": str(version_data.get('buildVersion', '1')),
+                    "date": str(version_data.get('date', datetime.now().isoformat())),
                     "downloadURL": ipa_url,
                 }
                 
@@ -166,8 +195,9 @@ class AltStoreRepoBuilder:
                     altstore_version['size'] = size
                 
                 # Add optional description
-                if version_data.get('localizedDescription'):
-                    altstore_version['localizedDescription'] = version_data['localizedDescription']
+                description = version_data.get('localizedDescription')
+                if description and isinstance(description, str):
+                    altstore_version['localizedDescription'] = description
                 
                 altstore_versions.append(altstore_version)
             
@@ -177,13 +207,13 @@ class AltStoreRepoBuilder:
             
             # Build main app entry
             app_entry = {
-                "name": app.get('name', 'Unknown App'),
-                "bundleIdentifier": app.get('bundleIdentifier', slug),
-                "developerName": app.get('developerName', 'OpenLyst Developer'),
-                "subtitle": app.get('subtitle', 'An app from OpenLyst'),
-                "localizedDescription": app.get('localizedDescription', app.get('description', 'A free and open source app')),
-                "iconURL": app.get('iconURL', ''),
-                "tintColor": app.get('tintColor', '#dc2626'),
+                "name": str(app.get('name', 'Unknown App')),
+                "bundleIdentifier": str(app.get('bundleIdentifier', slug)),
+                "developerName": str(app.get('developerName', 'OpenLyst Developer')),
+                "subtitle": str(app.get('subtitle', 'An app from OpenLyst')),
+                "localizedDescription": str(app.get('localizedDescription', app.get('description', 'A free and open source app'))),
+                "iconURL": str(app.get('iconURL', '')),
+                "tintColor": str(app.get('tintColor', '#dc2626')),
                 "category": self._map_category(app.get('category', 'other')),
                 "versions": altstore_versions,
             }
@@ -195,7 +225,7 @@ class AltStoreRepoBuilder:
             return app_entry
         
         except Exception as e:
-            logger.error(f"Error building app entry for {slug}: {e}")
+            logger.error(f"Error building app entry for {slug}: {e}", exc_info=True)
             return None
     
     def _map_category(self, category: str) -> str:
