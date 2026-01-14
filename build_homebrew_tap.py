@@ -398,7 +398,7 @@ def main():
         "name": "Openlyst Homebrew Tap",
         "description": f"Homebrew formulae for {args.platform} applications from OpenLyst",
         "homepage": "https://openlyst.ink",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now().isoformat() + "Z",
         "platform": args.platform,
         "formulae_count": generated_count
     }
@@ -408,7 +408,15 @@ def main():
     
     logger.info(f"Generated tap info: {output_dir / 'tap-info.json'}")
     
-    return 0 if failed_count == 0 else 1
+    # Only exit with error if NO formulae were generated
+    if generated_count == 0:
+        logger.error("No formulae were generated - this indicates a serious problem")
+        return 1
+    elif failed_count > 0:
+        logger.warning(f"{failed_count} apps failed to generate formulae, but {generated_count} succeeded")
+        return 0  # Success with warnings
+    
+    return 0
 
 
 if __name__ == "__main__":
