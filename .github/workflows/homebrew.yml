@@ -64,7 +64,7 @@ jobs:
           find homebrew-tap/Formula -name "*.rb" | head -1 | xargs cat || echo "No formulae generated"
       
       - name: Upload macOS formulae as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: homebrew-tap-macos
           path: homebrew-tap/
@@ -109,7 +109,7 @@ jobs:
           find homebrew-tap-linux/Formula -name "*.rb" | head -1 | xargs cat || echo "No formulae generated"
       
       - name: Upload Linux formulae as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: homebrew-tap-linux
           path: homebrew-tap-linux/
@@ -127,14 +127,14 @@ jobs:
       
       - name: Download macOS artifacts
         if: ${{ needs.build-macos.result == 'success' }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: homebrew-tap-macos
           path: homebrew-tap/
       
       - name: Download Linux artifacts  
         if: ${{ needs.build-linux.result == 'success' }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: homebrew-tap-linux
           path: homebrew-tap-linux/
