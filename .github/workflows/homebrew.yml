@@ -50,6 +50,7 @@ jobs:
           python build_homebrew_tap.py \
             --output-dir homebrew-tap \
             --platform macOS \
+            --calculate-sha256 \
             --verbose
       
       - name: Display macOS build output
@@ -95,6 +96,7 @@ jobs:
           python build_homebrew_tap.py \
             --output-dir homebrew-tap-linux \
             --platform Linux \
+            --calculate-sha256 \
             --verbose
       
       - name: Display Linux build output

@@ -210,7 +210,7 @@ class HomebrewFormulaGenerator:
             logger.warning(f"Failed to calculate SHA256 for {url}: {e}")
             return None
     
-    def generate_formula_content(self, app: Dict, version: Dict, platform: str) -> str:
+    def generate_formula_content(self, app: Dict, version: Dict, platform: str, calculate_sha256: bool = False) -> str:
         """Generate Homebrew formula content for an app version"""
         class_name = self.sanitize_class_name(app['name'])
         download_url = self.get_download_url_for_platform(version, platform)
@@ -222,9 +222,16 @@ class HomebrewFormulaGenerator:
         url_path = urlparse(download_url).path
         file_extension = Path(url_path).suffix.lower()
         
-        # Get SHA256 hash (commented out for now as it requires downloading)
-        # sha256_hash = self.get_download_url_sha256(download_url)
-        sha256_line = '    # sha256 "REPLACE_WITH_ACTUAL_SHA256"'
+        # Calculate SHA256 hash if requested
+        if calculate_sha256:
+            try:
+                sha256_hash = self.get_download_url_sha256(download_url)
+                sha256_line = f'  sha256 "{sha256_hash}"'
+            except Exception as e:
+                logger.warning(f"Failed to calculate SHA256 for {download_url}: {e}")
+                sha256_line = '  # sha256 "REPLACE_WITH_ACTUAL_SHA256"'
+        else:
+            sha256_line = '  # sha256 "REPLACE_WITH_ACTUAL_SHA256"'
         
         # Determine installation method based on file type
         if file_extension in ['.dmg', '.pkg']:
@@ -306,7 +313,7 @@ end
         return f'''    # Generic installation
     prefix.install Dir["*"]'''
     
-    def generate_formula(self, app: Dict, versions: List[Dict], platform: str) -> bool:
+    def generate_formula(self, app: Dict, versions: List[Dict], platform: str, calculate_sha256: bool = False) -> bool:
         """Generate Homebrew formula for an app"""
         if not versions:
             logger.warning(f"No versions found for app {app.get('name', 'Unknown')}")
@@ -322,7 +329,7 @@ end
             return False
         
         try:
-            formula_content = self.generate_formula_content(app, latest_version, platform)
+            formula_content = self.generate_formula_content(app, latest_version, platform, calculate_sha256)
             
             # Generate filename
             class_name = self.sanitize_class_name(app['name'])
@@ -352,6 +359,8 @@ def main():
                        help='Platform to fetch apps for')
     parser.add_argument('--verbose', action='store_true',
                        help='Enable verbose logging')
+    parser.add_argument('--calculate-sha256', action='store_true',
+                       help='Calculate SHA256 hashes for download files (slower but more secure)')
     
     args = parser.parse_args()
     
@@ -386,7 +395,7 @@ def main():
         # Get versions for this app
         versions = client.get_app_versions(slug)
         
-        if generator.generate_formula(app, versions, args.platform):
+        if generator.generate_formula(app, versions, args.platform, args.calculate_sha256):
             generated_count += 1
         else:
             failed_count += 1
