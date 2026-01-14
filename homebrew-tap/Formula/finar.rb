@@ -3,7 +3,7 @@ class Finar < Formula
   homepage "https://openlyst.ink"
   url "https://github.com/HttpAnimation/Openlyst-more-builds/releases/download/build-47/finar-1.1.0-2026-01-13-macos-unsigned.zip"
   version "1.1.0"
-    # sha256 "REPLACE_WITH_ACTUAL_SHA256"
+  sha256 "a33f16ee793519f6542e5006bd973b1ac66c713d73099c39db3e1779ace5db66"
 
   def install
     # Extract and install archive
