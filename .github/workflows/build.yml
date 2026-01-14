@@ -2003,7 +2003,8 @@ jobs:
         run: |
           if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
             echo "Setting up release signing..."
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+            mkdir -p android/app
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
             cat > android/key.properties << EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEY_PASSWORD
@@ -2581,7 +2582,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev dpkg-dev wget file squashfs-tools patchelf plocate libfuse2
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev dpkg-dev wget file squashfs-tools patchelf plocate libfuse2 libayatana-appindicator3-dev
           # Update locate database
           sudo updatedb || true
 
