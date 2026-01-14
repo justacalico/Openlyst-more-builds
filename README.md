@@ -51,6 +51,57 @@ brew install --cask httpanimation/openlyst-more-builds/app-name
 
 ### Automated Updates
 
-- Formulae are automatically updated daily via GitHub Actions
+- Formulae are automatically updated via GitHub Actions
 - Manual updates can be triggered via the "Build Homebrew Tap" workflow
 - To refresh the tap: run the "Build Homebrew Tap" workflow in GitHub Actions
+
+## Winget (Windows)
+
+### Quick Setup
+
+Install packages using Windows Package Manager:
+
+```powershell
+# Install a specific OpenLyst application
+winget install OpenLyst.AppName
+
+# Search for available applications
+winget search OpenLyst.
+```
+
+Repository: [https://github.com/HttpAnimation/Openlyst-more-builds](https://github.com/HttpAnimation/Openlyst-more-builds)
+
+### Available Commands
+
+- **Search packages**: `winget search OpenLyst.`
+- **Install application**: `winget install OpenLyst.AppName`
+- **Get package info**: `winget show OpenLyst.AppName`
+- **Uninstall application**: `winget uninstall OpenLyst.AppName`
+
+### Automated Updates
+
+- Manifests are automatically updated via GitHub Actions
+- Manual updates can be triggered via the "Build Winget Repository" workflow
+
+## F-Droid (Android)
+
+### Quick Setup
+
+Add this repository to F-Droid:
+
+1. Open **F-Droid** → **Settings** → **Repositories**
+2. Tap **+** to add repository
+3. Enter: `https://raw.githubusercontent.com/HttpAnimation/Openlyst-more-builds/main/fdroid-repo`
+
+Repository: [https://github.com/HttpAnimation/Openlyst-more-builds](https://github.com/HttpAnimation/Openlyst-more-builds)
+
+### Installation
+
+- Browse apps in F-Droid after adding the repository
+- Download APKs directly from OpenLyst or GitHub releases
+- All applications are free and open source
+
+### Automated Updates
+
+- Repository metadata is automatically updated via GitHub Actions
+- Manual updates can be triggered via the "Build F-Droid Repository" workflow

@@ -1,0 +1,90 @@
+name: Build F-Droid Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      calculate_info:
+        description: 'Calculate file sizes and hashes (slower but more complete)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "fdroid-repo"
+  cancel-in-progress: false
+
+jobs:
+  build-fdroid:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Build F-Droid repository
+        run: |
+          if [ "${{ github.event.inputs.calculate_info }}" = "true" ]; then
+            python build_fdroid_repo.py \
+              --output-dir fdroid-repo \
+              --calculate-info \
+              --verbose
+          else
+            python build_fdroid_repo.py \
+              --output-dir fdroid-repo \
+              --verbose
+          fi
+      
+      - name: Display build output
+        run: |
+          echo "=== F-Droid Repository Structure ==="
+          find fdroid-repo -type f | head -10
+          echo ""
+          echo "=== Generated Metadata Count ==="
+          find fdroid-repo/metadata -name "*.yml" | wc -l 2>/dev/null || echo "0"
+          echo ""
+          echo "=== Sample Metadata ==="
+          find fdroid-repo/metadata -name "*.yml" | head -1 | xargs cat 2>/dev/null || echo "No metadata generated"
+          echo ""
+          echo "=== Repository Index ==="
+          if [ -f "fdroid-repo/index.json" ]; then
+            echo "Repository index generated successfully"
+            jq '.repo.name' fdroid-repo/index.json 2>/dev/null || echo "Index file exists but may have issues"
+          else
+            echo "No repository index generated"
+          fi
+      
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit and push changes
+        run: |
+          git add fdroid-repo/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update F-Droid repository $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            # Try to push, if it fails due to conflicts, pull and retry
+            if ! git push; then
+              echo "Push failed, pulling latest changes and retrying..."
+              git pull origin main --rebase
+              git push
+            fi
+          fi
