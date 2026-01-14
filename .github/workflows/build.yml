@@ -461,6 +461,7 @@ jobs:
       - name: Build iOS (No Code Signing)
         run: |
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build ios --release --no-codesign
 
@@ -985,6 +986,7 @@ jobs:
       - name: Build Windows
         run: |
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build windows --release
       
@@ -1407,6 +1409,7 @@ jobs:
         run: |
           flutter config --enable-macos-desktop
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build macos --release --build-name=${{ steps.version.outputs.version }}
         env:
@@ -2030,6 +2033,7 @@ jobs:
       - name: Build APK
         run: |
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
           mv build/app/outputs/flutter-apk/app-release.apk opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}.apk
@@ -2613,6 +2617,7 @@ jobs:
         run: |
           flutter config --enable-linux-desktop
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build linux --release --build-name=${{ steps.version.outputs.version }}
 
@@ -2985,6 +2990,7 @@ jobs:
       - name: Build Web
         run: |
           flutter pub get
+          flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
           flutter build web --release --build-name=${{ steps.version.outputs.version }}
 
