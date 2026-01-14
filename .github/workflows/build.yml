@@ -82,6 +82,22 @@ on:
         required: false
         type: string
         default: ''
+      # OpenTorrent
+      build_opentorrent:
+        description: 'Build OpenTorrent'
+        required: false
+        type: boolean
+        default: false
+      opentorrent_platforms:
+        description: 'OpenTorrent platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        required: false
+        type: string
+        default: 'ios,android,windows,linux,macos,web'
+      opentorrent_commit_hash:
+        description: 'OpenTorrent commit hash (leave empty for latest)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -406,6 +422,79 @@ jobs:
         with:
           name: klit-ios
           path: klit-*-ios-unsigned.ipa
+
+  # IOS - OPENTORRENT
+  build-ios-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'ios') }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (No Code Signing)
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
+          rm -rf Payload
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-ios
+          path: opentorrent-*-ios-unsigned.ipa
 
   # ============================================================================
   # WINDOWS BUILDS
@@ -858,6 +947,117 @@ jobs:
           name: klit-windows-x64-installer
           path: klit-*-windows-x64-setup.exe
 
+  # 5. BUILD WINDOWS - OPENTORRENT (x64)
+  build-windows-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'windows') }}
+    runs-on: windows-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(Get-Date -Format 'o')" >> $env:GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git . 
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - name: Get version and date
+        id: version
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version: ', '' -replace '\+.*', ''
+          $date = Get-Date -Format 'yyyy-MM-dd'
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "build_date=$date" >> $env:GITHUB_OUTPUT
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Build Windows
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build windows --release
+      
+      - name: ZIP Windows Build
+        run: |
+          $filename = "opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
+
+      - name: Create Inno Setup Script
+        run: |
+          @"
+          [Setup]
+          AppName=OpenTorrent
+          AppVersion=${{ steps.version.outputs.version }}
+          AppPublisher=Openlyst
+          DefaultDirName={autopf}\OpenTorrent
+          DefaultGroupName=OpenTorrent
+          OutputDir=.
+          OutputBaseFilename=opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
+          Compression=lzma2
+          SolidCompression=yes
+          ArchitecturesInstallIn64BitMode=x64compatible
+          WizardStyle=modern
+          UninstallDisplayIcon={app}\opentorrent.exe
+          PrivilegesRequired=lowest
+          
+          [Languages]
+          Name: "english"; MessagesFile: "compiler:Default.isl"
+          
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+          
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+          
+          [Icons]
+          Name: "{group}\OpenTorrent"; Filename: "{app}\opentorrent.exe"
+          Name: "{group}\{cm:UninstallProgram,OpenTorrent}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\OpenTorrent"; Filename: "{app}\opentorrent.exe"; Tasks: desktopicon
+          
+          [Run]
+          Filename: "{app}\opentorrent.exe"; Description: "{cm:LaunchProgram,OpenTorrent}"; Flags: nowait postinstall skipifsilent
+          "@ | Out-File -FilePath installer.iss -Encoding UTF8
+
+      - name: Build Windows Installer
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          $start = [DateTime]::Parse("${{ steps.start.outputs.start_time }}")
+          $duration = [Math]::Round(((Get-Date) - $start).TotalMinutes, 1)
+          echo "duration=$duration" >> $env:GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Windows ZIP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-windows-x64-zip
+          path: opentorrent-*-windows-x64.zip
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-windows-x64-installer
+          path: opentorrent-*-windows-x64-setup.exe
+
   # ============================================================================
   # MACOS BUILDS (No Code Signing)
   # ============================================================================
@@ -1167,6 +1367,81 @@ jobs:
         with:
           name: klit-macos
           path: klit-*-macos-unsigned.zip
+
+  # MACOS - OPENTORRENT
+  build-macos-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'macos') }}
+    runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build macOS (No Code Signing)
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+
+      - name: Create ZIP (unsigned)
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r $GITHUB_WORKSPACE/opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          end_seconds=$(date +%s)
+          if [ "$start_seconds" != "0" ]; then
+            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          else
+            duration="N/A"
+          fi
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-macos
+          path: opentorrent-*-macos-unsigned.zip
 
   # ============================================================================
   # ANDROID BUILDS (APK + AAB)
@@ -1684,6 +1959,108 @@ jobs:
             repstore-*.apk
             repstore-*.aab
 
+  # ANDROID - OPENTORRENT
+  build-android-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'android') }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+      signing: ${{ steps.signing.outputs.signing }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Android signing
+        id: signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.OPENTORRENT_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.OPENTORRENT_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.OPENTORRENT_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.OPENTORRENT_KEY_ALIAS }}
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
+            echo "Setting up release signing..."
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+            cat > android/key.properties << EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+            echo "signing=release" >> $GITHUB_OUTPUT
+          else
+            echo "signing=debug" >> $GITHUB_OUTPUT
+            echo "⚠️ No keystore configured, using debug signing"
+          fi
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/flutter-apk/app-release.apk opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}.apk
+
+      - name: Build AAB
+        run: |
+          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
+          mv build/app/outputs/bundle/release/app-release.aab opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}.aab
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s)
+          end_seconds=$(date +%s)
+          duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-android
+          path: |
+            opentorrent-*.apk
+            opentorrent-*.aab
+
   # ============================================================================
   # LINUX BUILDS (ZIP, AppImage, DEB)
   # ============================================================================
@@ -2177,6 +2554,129 @@ jobs:
             klit-*-linux-x64.zip
             artifacts/
 
+  # LINUX - OPENTORRENT
+  build-linux-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'linux') }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev dpkg-dev wget file squashfs-tools patchelf plocate libfuse2
+          # Update locate database
+          sudo updatedb || true
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x /tmp/appimagetool.AppImage
+          cd /tmp && ./appimagetool.AppImage --appimage-extract
+          sudo mv /tmp/squashfs-root /opt/appimagetool
+          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
+          # Verify appimagetool works
+          appimagetool --version || echo "appimagetool installed"
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build Linux
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build/linux/x64/release
+          zip -r $GITHUB_WORKSPACE/opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-x64.zip bundle/
+
+      - name: Install fastforge and build packages
+        run: |
+          dart pub global activate fastforge
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          export PUB_CACHE="$HOME/.pub-cache"
+          mkdir -p artifacts
+          
+          # Check for configuration files
+          echo "=== Checking configuration files ==="
+          ls -la linux/packaging/ || echo "No linux/packaging directory"
+          ls -la linux/packaging/deb/ 2>/dev/null || echo "No deb config"
+          ls -la linux/packaging/appimage/ 2>/dev/null || echo "No appimage config"
+          cat distribute_options.yaml 2>/dev/null || echo "No distribute_options.yaml"
+          
+          # Build DEB
+          echo "=== Building DEB package ==="
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets deb --skip-clean || echo "DEB build failed or had warnings"
+          
+          # Build AppImage
+          echo "=== Building AppImage package ==="
+          $HOME/.pub-cache/bin/fastforge package --platform linux --targets appimage --skip-clean || echo "AppImage build failed or had warnings"
+          
+          # Copy artifacts
+          echo "=== Copying artifacts ==="
+          find . -name "*.deb" -type f 2>/dev/null
+          find . -name "*.AppImage" -type f 2>/dev/null
+          find dist -name "*.deb" -exec cp {} artifacts/opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-amd64.deb \; 2>/dev/null || true
+          find dist -name "*.AppImage" -exec cp {} artifacts/opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-x86_64.AppImage \; 2>/dev/null || true
+          
+          # List what we have
+          echo "=== Final Artifacts ==="
+          ls -la artifacts/ || true
+          ls -laR dist/ 2>/dev/null || true
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s)
+          end_seconds=$(date +%s)
+          duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-linux
+          path: |
+            opentorrent-*-linux-x64.zip
+            artifacts/
+
   # ============================================================================
   # WEB BUILDS
   # ============================================================================
@@ -2446,6 +2946,73 @@ jobs:
           name: klit-web
           path: klit-*-web.zip
 
+  # WEB - OPENTORRENT
+  build-web-opentorrent:
+    if: ${{ github.event.inputs.build_opentorrent == 'true' && contains(github.event.inputs.opentorrent_platforms, 'web') }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/opentorrent.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.opentorrent_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.opentorrent_commit_hash }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build Web
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r $GITHUB_WORKSPACE/opentorrent-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-web.zip web/
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s)
+          end_seconds=$(date +%s)
+          duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opentorrent-web
+          path: opentorrent-*-web.zip
+
   # ============================================================================
   # CREATE GITHUB RELEASE
   # ============================================================================
@@ -2455,27 +3022,33 @@ jobs:
       - build-ios-docan
       - build-ios-finar
       - build-ios-klit
+      - build-ios-opentorrent
       - build-windows-doudou
       - build-windows-docan
       - build-windows-finar
       - build-windows-klit
+      - build-windows-opentorrent
       - build-macos-doudou
       - build-macos-docan
       - build-macos-finar
       - build-macos-klit
+      - build-macos-opentorrent
       - build-android-doudou
       - build-android-docan
       - build-android-finar
       - build-android-klit
       - build-android-repstore
+      - build-android-opentorrent
       - build-linux-doudou
       - build-linux-docan
       - build-linux-finar
       - build-linux-klit
+      - build-linux-opentorrent
       - build-web-doudou
       - build-web-docan
       - build-web-finar
       - build-web-klit
+      - build-web-opentorrent
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     steps:
@@ -2531,7 +3104,8 @@ jobs:
               "docan": ${{ github.event.inputs.build_docan }},
               "finar": ${{ github.event.inputs.build_finar }},
               "klit": ${{ github.event.inputs.build_klit }},
-              "repstore": ${{ github.event.inputs.build_repstore }}
+              "repstore": ${{ github.event.inputs.build_repstore }},
+              "opentorrent": ${{ github.event.inputs.build_opentorrent }}
             },
             "artifacts": []
           }
@@ -2572,6 +3146,7 @@ jobs:
               finar-*) project="finar" ;;
               klit-*) project="klit" ;;
               repstore-*) project="repstore" ;;
+              opentorrent-*) project="opentorrent" ;;
             esac
             
             if [ "$FIRST" = true ]; then
@@ -2718,6 +3293,19 @@ jobs:
             echo "" >> release_notes.md
           fi
           
+          # OpenTorrent
+          if [ "${{ github.event.inputs.build_opentorrent }}" == "true" ]; then
+            echo "### OpenTorrent" >> release_notes.md
+            echo "- Version: ${{ needs.build-android-opentorrent.outputs.version || needs.build-windows-opentorrent.outputs.version || 'N/A' }}" >> release_notes.md
+            echo "- Windows: ${{ needs.build-windows-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-windows-opentorrent.outputs.duration && format('({0} min)', needs.build-windows-opentorrent.outputs.duration) || '' }}" >> release_notes.md
+            echo "- macOS: ${{ needs.build-macos-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-macos-opentorrent.outputs.duration && format('({0} min)', needs.build-macos-opentorrent.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- iOS: ${{ needs.build-ios-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-ios-opentorrent.outputs.duration && format('({0} min)', needs.build-ios-opentorrent.outputs.duration) || '' }} (unsigned)" >> release_notes.md
+            echo "- Android: ${{ needs.build-android-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-android-opentorrent.outputs.duration && format('({0} min)', needs.build-android-opentorrent.outputs.duration) || '' }} - Signing: ${{ needs.build-android-opentorrent.outputs.signing || 'N/A' }}" >> release_notes.md
+            echo "- Linux: ${{ needs.build-linux-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-linux-opentorrent.outputs.duration && format('({0} min)', needs.build-linux-opentorrent.outputs.duration) || '' }}" >> release_notes.md
+            echo "- Web: ${{ needs.build-web-opentorrent.outputs.status || 'skipped' }} ${{ needs.build-web-opentorrent.outputs.duration && format('({0} min)', needs.build-web-opentorrent.outputs.duration) || '' }}" >> release_notes.md
+            echo "" >> release_notes.md
+          fi
+          
           echo "---" >> release_notes.md
           echo "" >> release_notes.md
           
@@ -2731,26 +3319,32 @@ jobs:
           if [ "${{ needs.build-ios-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-iOS"; fi
           if [ "${{ needs.build-ios-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-iOS"; fi
           if [ "${{ needs.build-ios-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-iOS"; fi
+          if [ "${{ needs.build-ios-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-iOS"; fi
           if [ "${{ needs.build-windows-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Windows"; fi
           if [ "${{ needs.build-windows-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Windows"; fi
           if [ "${{ needs.build-windows-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Windows"; fi
           if [ "${{ needs.build-windows-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Windows"; fi
+          if [ "${{ needs.build-windows-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-Windows"; fi
           if [ "${{ needs.build-macos-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-macOS"; fi
           if [ "${{ needs.build-macos-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-macOS"; fi
           if [ "${{ needs.build-macos-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-macOS"; fi
           if [ "${{ needs.build-macos-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-macOS"; fi
+          if [ "${{ needs.build-macos-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-macOS"; fi
           if [ "${{ needs.build-android-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Android"; fi
           if [ "${{ needs.build-android-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Android"; fi
           if [ "${{ needs.build-android-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Android"; fi
           if [ "${{ needs.build-android-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Android"; fi
+          if [ "${{ needs.build-android-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-Android"; fi
           if [ "${{ needs.build-linux-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Linux"; fi
           if [ "${{ needs.build-linux-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Linux"; fi
           if [ "${{ needs.build-linux-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Linux"; fi
           if [ "${{ needs.build-linux-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Linux"; fi
+          if [ "${{ needs.build-linux-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-Linux"; fi
           if [ "${{ needs.build-web-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Web"; fi
           if [ "${{ needs.build-web-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Web"; fi
           if [ "${{ needs.build-web-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Web"; fi
           if [ "${{ needs.build-web-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Web"; fi
+          if [ "${{ needs.build-web-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-Web"; fi
           if [ "${{ needs.build-android-repstore.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Repstore-Android"; fi
           
           if [ -n "$FAILED_BUILDS" ]; then
@@ -2765,6 +3359,7 @@ jobs:
           if [ "${{ needs.build-android-finar.outputs.signing }}" == "debug" ]; then DEBUG_SIGNED="$DEBUG_SIGNED Finar"; fi
           if [ "${{ needs.build-android-klit.outputs.signing }}" == "debug" ]; then DEBUG_SIGNED="$DEBUG_SIGNED Klit"; fi
           if [ "${{ needs.build-android-repstore.outputs.signing }}" == "debug" ]; then DEBUG_SIGNED="$DEBUG_SIGNED Repstore"; fi
+          if [ "${{ needs.build-android-opentorrent.outputs.signing }}" == "debug" ]; then DEBUG_SIGNED="$DEBUG_SIGNED OpenTorrent"; fi
           
           if [ -n "$DEBUG_SIGNED" ]; then
             echo "🟡 **Debug signed (missing keystore):**$DEBUG_SIGNED" >> release_notes.md
