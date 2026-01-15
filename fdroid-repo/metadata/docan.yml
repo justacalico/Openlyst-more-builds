@@ -1,0 +1,29 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: Docan
+Summary: Universal AI chat application with Liquid Glass design
+
+Description: |
+    Docan is a universal AI chat application featuring a stunning Liquid Glass design. Connect with various AI providers and enjoy a seamless chat experience across all your devices.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '3.0.0'
+    versionCode: 1
+    commit: v3.0.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '3.0.0'
+CurrentVersionCode: 1

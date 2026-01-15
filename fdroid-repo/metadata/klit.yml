@@ -1,0 +1,36 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: Klit
+Summary: Advanced E926 client
+
+Description: |
+    The successor to BaoBao. A modern, privacy-focused client for the e621 community. Built with user experience and data protection as top priorities.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '6.0.0'
+    versionCode: 1
+    commit: v6.0.0
+    subdir: app
+    gradle:
+      - yes
+
+  - versionName: '5.0.0'
+    versionCode: 1
+    commit: v5.0.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '6.0.0'
+CurrentVersionCode: 1

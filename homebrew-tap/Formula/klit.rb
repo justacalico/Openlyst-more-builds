@@ -6,7 +6,7 @@ class Klit < Formula
   sha256 "285d8bcf8e8c29ab8d4acbc9e5ea67d84ec33b48dd164a6acf19c6b6bf1ce049"
 
   def install
-    # Extract and install archive
+    # Generic installation
     prefix.install Dir["*"]
   end
 

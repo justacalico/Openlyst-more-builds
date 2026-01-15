@@ -1,0 +1,43 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: Doudou
+Summary: Music player for self-hosted services
+
+Description: |
+    Break free from corporate streaming platforms. Doudou connects to your self-hosted music services like Jellyfin, Plex, and Navidrome, giving you complete control over your music library.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '12.0.1'
+    versionCode: 1
+    commit: v12.0.1
+    subdir: app
+    gradle:
+      - yes
+
+  - versionName: '12.0.0'
+    versionCode: 1
+    commit: v12.0.0
+    subdir: app
+    gradle:
+      - yes
+
+  - versionName: '11.0.0'
+    versionCode: 1
+    commit: v11.0.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '12.0.1'
+CurrentVersionCode: 1

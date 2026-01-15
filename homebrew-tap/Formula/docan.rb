@@ -6,7 +6,7 @@ class Docan < Formula
   sha256 "2f5076154c467c4d34d49ca51d7b07b70c847abfde8044bd69c5532211d864f8"
 
   def install
-    # Extract and install archive
+    # Generic installation
     prefix.install Dir["*"]
   end
 

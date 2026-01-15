@@ -6,7 +6,7 @@ class Doudou < Formula
   sha256 "f15b367ba9916d7c97178d7f499758c3f8310787529436c369af3fabd3a74371"
 
   def install
-    # Extract and install archive
+    # Generic installation
     prefix.install Dir["*"]
   end
 

@@ -1,0 +1,29 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: RepStore
+Summary: Alternative App Store for Android
+
+Description: |
+    Alternative app store for iOS*/Android based on repositories compatible with AltStore repos. Browse and install APKs from repositories with a clean, modern interface.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '3.1.0'
+    versionCode: 1
+    commit: v3.1.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '3.1.0'
+CurrentVersionCode: 1

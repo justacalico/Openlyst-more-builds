@@ -1,0 +1,29 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: Opentorrent
+Summary: qBittorrent client.
+
+Description: |
+    Manage your torrents with Opentorrent, a cross-platform qBittorrent client that brings seamless torrenting to iOS, macOS, Windows, Linux, Android, and the Web.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '1.0.0'
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '1.0.0'
+CurrentVersionCode: 1

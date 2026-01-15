@@ -1,0 +1,29 @@
+Categories:
+  - System
+License: Unknown
+AuthorName: OpenLyst Developer
+AuthorWebSite: https://openlyst.ink
+WebSite: https://openlyst.ink
+SourceCode: 
+IssueTracker: 
+
+AutoName: Finar
+Summary: Replacement frontend for Jellyfin
+
+Description: |
+    A beautiful, modern multi-platform Jellyfin client built with Flutter. Features native video playback powered by media_kit, glassmorphism design with blur effects and glass-like components, dark mode, offline support with Hive, and adaptive UI optimized for desktop, mobile, and TV.
+
+RepoType: git
+Repo: 
+
+Builds:
+
+  - versionName: '1.1.0'
+    versionCode: 1
+    commit: v1.1.0
+    subdir: app
+    gradle:
+      - yes
+
+CurrentVersion: '1.1.0'
+CurrentVersionCode: 1

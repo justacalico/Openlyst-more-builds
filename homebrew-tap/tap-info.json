@@ -1,8 +1,8 @@
 {
-  "name": "Openlyst Homebrew Tap",
-  "description": "Homebrew formulae for macOS applications from OpenLyst",
+  "name": "OpenLyst Homebrew Tap",
+  "description": "Homebrew formulae for Linux applications from OpenLyst",
   "homepage": "https://openlyst.ink",
-  "generated_at": "2026-01-15T13:03:23.911335Z",
-  "platform": "macOS",
+  "generated_at": "2026-01-15T13:19:50.850995Z",
+  "platform": "Linux",
   "formulae_count": 5
 }

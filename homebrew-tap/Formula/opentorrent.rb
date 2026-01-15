@@ -6,7 +6,7 @@ class Opentorrent < Formula
   sha256 "730a38dff693f4e1d79e21b456f5ea95d1456a43024d87d7929d2d91a1ee4e22"
 
   def install
-    # Extract and install archive
+    # Generic installation
     prefix.install Dir["*"]
   end
 

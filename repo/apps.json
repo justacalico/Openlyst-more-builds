@@ -1,5 +1,5 @@
 {
-  "name": "Openlyst",
+  "name": "OpenLyst iOS Apps",
   "subtitle": "Free and open source iOS applications",
   "description": "A curated collection of free and open source iOS applications from OpenLyst.",
   "iconURL": "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/icon.png",
@@ -49,6 +49,14 @@
       "tintColor": "#dc2626",
       "category": "other",
       "versions": [
+        {
+          "version": "12.0.1",
+          "buildVersion": "1",
+          "date": "2026-01-15",
+          "downloadURL": "https://github.com/HttpAnimation/Openlyst-more-builds/releases/download/build-53/doudou-12.0.1-2026-01-15-ios-unsigned.ipa",
+          "size": 13809153,
+          "localizedDescription": "# 12.0.1\n\n- Updated donate URL | https://openlyst.ink/support\n- Version bump to 12.0.1\n- Haptic feedback for favorite button"
+        },
         {
           "version": "12.0.0",
           "buildVersion": "1",

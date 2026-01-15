@@ -6,7 +6,7 @@ class Finar < Formula
   sha256 "a33f16ee793519f6542e5006bd973b1ac66c713d73099c39db3e1779ace5db66"
 
   def install
-    # Extract and install archive
+    # Generic installation
     prefix.install Dir["*"]
   end
 
