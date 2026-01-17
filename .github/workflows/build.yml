@@ -3359,7 +3359,7 @@ jobs:
             echo "- Android: ${{ needs.build-android-finar.outputs.status || 'skipped' }} ${{ needs.build-android-finar.outputs.duration && format('({0} min)', needs.build-android-finar.outputs.duration) || '' }} - Signing: ${{ needs.build-android-finar.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-finar.outputs.status || 'skipped' }} ${{ needs.build-linux-finar.outputs.duration && format('({0} min)', needs.build-linux-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-finar.outputs.status || 'skipped' }} ${{ needs.build-web-finar.outputs.duration && format('({0} min)', needs.build-web-finar.outputs.duration) || '' }}" >> release_notes.md
-            echo "- Docker: ${{ needs.build-docker-finar.outputs.status || 'skipped' }} ${{ needs.build-docker-finar.outputs.duration && format('({0} min)', needs.build-docker-finar.outputs.duration) || '' }}" >> release_notes.md
+            echo "- Docker: ${{ needs.build-docker-finar.outputs.status || 'skipped' }} ${{ needs.build-docker-finar.outputs.duration && format('({0} min)', needs.build-docker-finar.outputs.duration) || '' }} - \\\`docker pull ghcr.io/${{ github.repository_owner }}/finar:latest\\\`" >> release_notes.md
             echo "" >> release_notes.md
           fi
           
