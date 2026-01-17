@@ -3478,7 +3478,19 @@ jobs:
           echo "| Android | APK, AAB | arm64-v8a, armeabi-v7a, x86_64 |" >> release_notes.md
           echo "| Linux | ZIP, DEB, AppImage | x86_64 |" >> release_notes.md
           echo "| Web | ZIP | Universal |" >> release_notes.md
-          echo "| Docker | tar.gz | x86_64 |" >> release_notes.md
+          echo "| Docker | ghcr.io package | x86_64 |" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🐳 Docker" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Pull the Finar Docker image:" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "docker pull ghcr.io/${{ github.repository_owner }}/finar:latest" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Run the container:" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "docker run -d -p 8080:80 ghcr.io/${{ github.repository_owner }}/finar:latest" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
           echo "" >> release_notes.md
