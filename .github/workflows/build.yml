@@ -41,10 +41,10 @@ on:
         type: boolean
         default: false
       finar_platforms:
-        description: 'Finar platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        description: 'Finar platforms (comma-separated: ios,android,windows,linux,macos,web,docker)'
         required: false
         type: string
-        default: 'ios,android,windows,linux,macos,web'
+        default: 'ios,android,windows,linux,macos,web,docker'
       finar_commit_hash:
         description: 'Finar commit hash (leave empty for latest)'
         required: false
@@ -3021,6 +3021,72 @@ jobs:
           path: opentorrent-*-web.zip
 
   # ============================================================================
+  # DOCKER BUILDS
+  # ============================================================================
+
+  # DOCKER - FINAR
+  build-docker-finar:
+    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'docker') }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_date: ${{ steps.version.outputs.build_date }}
+      duration: ${{ steps.duration.outputs.duration }}
+      status: ${{ steps.status.outputs.status }}
+    steps:
+      - name: Record start time
+        id: start
+        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
+
+      - name: Clone GitLab Repo
+        run: git clone https://gitlab.com/Openlyst/finar.git .
+
+      - name: Checkout specific commit
+        if: ${{ github.event.inputs.finar_commit_hash != '' }}
+        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
+
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          BUILD_DATE=$(date +%Y-%m-%d)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -f docker/Dockerfile -t finar:${{ steps.version.outputs.version }} -t finar:latest .
+
+      - name: Save Docker Image
+        run: |
+          docker save finar:${{ steps.version.outputs.version }} | gzip > finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-docker.tar.gz
+
+      - name: Record duration and status
+        id: duration
+        if: always()
+        run: |
+          start_time="${{ steps.start.outputs.start_time }}"
+          start_seconds=$(date -d "$start_time" +%s)
+          end_seconds=$(date +%s)
+          duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
+          echo "duration=$duration" >> $GITHUB_OUTPUT
+
+      - name: Set status
+        id: status
+        if: always()
+        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Docker Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finar-docker
+          path: finar-*-docker.tar.gz
+
+  # ============================================================================
   # CREATE GITHUB RELEASE
   # ============================================================================
   create-release:
@@ -3056,6 +3122,7 @@ jobs:
       - build-web-finar
       - build-web-klit
       - build-web-opentorrent
+      - build-docker-finar
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     steps:
@@ -3066,22 +3133,23 @@ jobs:
 
       - name: Flatten artifacts directory
         run: |
-          # Move .deb, .AppImage, and .exe files from artifacts/ to root directory
+          # Move .deb, .AppImage, .exe and .tar.gz files from artifacts/ to root directory
           if [ -d "artifacts" ]; then
             find artifacts -name "*.deb" -exec mv {} . \; 2>/dev/null || true
             find artifacts -name "*.AppImage" -exec mv {} . \; 2>/dev/null || true
             find artifacts -name "*.exe" -exec mv {} . \; 2>/dev/null || true
+            find artifacts -name "*.tar.gz" -exec mv {} . \; 2>/dev/null || true
             rm -rf artifacts
           fi
           echo "=== Files available for release ==="
-          ls -la *.zip *.apk *.aab *.ipa *.deb *.AppImage *.exe 2>/dev/null || echo "Listing files..."
-          find . -maxdepth 1 -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) -ls
+          ls -la *.zip *.apk *.aab *.ipa *.deb *.AppImage *.exe *.tar.gz 2>/dev/null || echo "Listing files..."
+          find . -maxdepth 1 -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.tar.gz" \) -ls
 
       - name: Generate SHA256 checksums
         run: |
           echo "Generating SHA256 checksums..."
           # Create checksums file
-          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" \) -exec sha256sum {} \; | sed 's|\./||' > SHA256SUMS.txt
+          find . -type f \( -name "*.zip" -o -name "*.apk" -o -name "*.aab" -o -name "*.ipa" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.exe" -o -name "*.tar.gz" \) -exec sha256sum {} \; | sed 's|\./||' > SHA256SUMS.txt
           echo "=== SHA256 Checksums ==="
           cat SHA256SUMS.txt
 
@@ -3276,6 +3344,7 @@ jobs:
             echo "- Android: ${{ needs.build-android-finar.outputs.status || 'skipped' }} ${{ needs.build-android-finar.outputs.duration && format('({0} min)', needs.build-android-finar.outputs.duration) || '' }} - Signing: ${{ needs.build-android-finar.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-finar.outputs.status || 'skipped' }} ${{ needs.build-linux-finar.outputs.duration && format('({0} min)', needs.build-linux-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-finar.outputs.status || 'skipped' }} ${{ needs.build-web-finar.outputs.duration && format('({0} min)', needs.build-web-finar.outputs.duration) || '' }}" >> release_notes.md
+            echo "- Docker: ${{ needs.build-docker-finar.outputs.status || 'skipped' }} ${{ needs.build-docker-finar.outputs.duration && format('({0} min)', needs.build-docker-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "" >> release_notes.md
           fi
           
@@ -3394,6 +3463,7 @@ jobs:
           echo "| Android | APK, AAB | arm64-v8a, armeabi-v7a, x86_64 |" >> release_notes.md
           echo "| Linux | ZIP, DEB, AppImage | x86_64 |" >> release_notes.md
           echo "| Web | ZIP | Universal |" >> release_notes.md
+          echo "| Docker | tar.gz | x86_64 |" >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
           echo "" >> release_notes.md
@@ -3429,5 +3499,6 @@ jobs:
             *.deb
             *.AppImage
             *.exe
+            *.tar.gz
             SHA256SUMS.txt
             build-manifest.json
