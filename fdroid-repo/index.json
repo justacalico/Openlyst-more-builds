@@ -4,7 +4,7 @@
     "description": "Free and open source Android applications from OpenLyst",
     "icon": "icon.png",
     "address": "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/fdroid-repo",
-    "timestamp": 1768483181533,
+    "timestamp": 1768760909747,
     "version": 21
   },
   "requests": {
@@ -23,8 +23,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     },
     {
       "packageName": "doudou",
@@ -37,8 +37,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     },
     {
       "packageName": "finar",
@@ -51,13 +51,13 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     },
     {
       "packageName": "klit",
       "name": "Klit",
-      "summary": "Advanced E926 client",
+      "summary": "E926 API client",
       "icon": "https://openlyst.ink/icons/Klit/icon.png",
       "description": "The successor to BaoBao. A modern, privacy-focused client for the e621 community. Built with user experience and data protection as top priorities.",
       "license": "Unknown",
@@ -65,8 +65,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     },
     {
       "packageName": "opentorrent",
@@ -79,8 +79,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     },
     {
       "packageName": "repstore",
@@ -93,14 +93,14 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768483181533,
-      "lastUpdated": 1768483181533
+      "added": 1768760909747,
+      "lastUpdated": 1768760909747
     }
   ],
   "packages": {
     "docan": [
       {
-        "added": 1768483178728,
+        "added": 1768760905307,
         "apkName": "docan-3.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -114,7 +114,7 @@
     ],
     "doudou": [
       {
-        "added": 1768483179145,
+        "added": 1768760905787,
         "apkName": "doudou-12.0.1.apk",
         "hash": "",
         "hashType": "sha256",
@@ -126,7 +126,7 @@
         "versionName": "12.0.1"
       },
       {
-        "added": 1768483179405,
+        "added": 1768760906199,
         "apkName": "doudou-12.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -138,7 +138,7 @@
         "versionName": "12.0.0"
       },
       {
-        "added": 1768483179598,
+        "added": 1768760906617,
         "apkName": "doudou-11.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -152,7 +152,7 @@
     ],
     "finar": [
       {
-        "added": 1768483180225,
+        "added": 1768760907217,
         "apkName": "finar-1.1.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -166,7 +166,19 @@
     ],
     "klit": [
       {
-        "added": 1768483180635,
+        "added": 1768760907817,
+        "apkName": "klit-7.0.0.apk",
+        "hash": "",
+        "hashType": "sha256",
+        "minSdkVersion": 21,
+        "packageName": "klit",
+        "size": 100169484,
+        "targetSdkVersion": 34,
+        "versionCode": 1,
+        "versionName": "7.0.0"
+      },
+      {
+        "added": 1768760908121,
         "apkName": "klit-6.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -178,7 +190,7 @@
         "versionName": "6.0.0"
       },
       {
-        "added": 1768483180808,
+        "added": 1768760908562,
         "apkName": "klit-5.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -192,7 +204,7 @@
     ],
     "opentorrent": [
       {
-        "added": 1768483181049,
+        "added": 1768760909026,
         "apkName": "opentorrent-1.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -206,7 +218,7 @@
     ],
     "repstore": [
       {
-        "added": 1768483181238,
+        "added": 1768760909349,
         "apkName": "repstore-3.1.0.apk",
         "hash": "",
         "hashType": "sha256",

@@ -1,9 +1,9 @@
 class Klit < Formula
-  desc "Advanced E926 client"
+  desc "E926 API client"
   homepage "https://openlyst.ink"
-  url "https://github.com/HttpAnimation/Openlyst-more-builds/releases/download/build-49/klit-6.0.0-2026-01-14-linux-x86_64.AppImage"
-  version "6.0.0"
-  sha256 "ce1118d105eba0a173821bc3f715e6447eb7782c37bc5640450372cb0f1640e6"
+  url "https://github.com/HttpAnimation/Openlyst-more-builds/releases/download/build-60/klit-7.0.0-2026-01-18-linux-x86_64.AppImage"
+  version "7.0.0"
+  sha256 "32f494a01c3909df270506bc835200570143e7d6b6811a01022bb6a66bf9d63a"
 
   def install
     # Generic installation
