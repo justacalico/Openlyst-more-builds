@@ -21,7 +21,7 @@ Served via GitHub Raw Content CDN (auto-updated with every commit)
 
 ### CDN URL (Fast Cache)
 ```
-https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.json
+https://cdn.jsdelivr.net/gh/JustACalicos/Openlyst-more-builds@main/repo/apps.json
 ```
 Served via jsDelivr CDN for faster downloads globally (auto-purges on new commits)
 
@@ -112,13 +112,13 @@ Multiple ways to access the repository:
 
 2. **Secondary - jsDelivr CDN** (global fast cache):
    ```
-   https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.json
+   https://cdn.jsdelivr.net/gh/JustACalicos/Openlyst-more-builds@main/repo/apps.json
    ```
 
 3. **Archive - GitHub Releases** (version history):
    ```
    https://github.com/httpanimations/Openlyst-more-builds/releases/download/altstore-repo-{BUILD_NUMBER}
-   https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.json
+   https://cdn.jsdelivr.net/gh/JustACalicos/Openlyst-more-builds@main/repo/apps.json
    ```
 
 ## Monitoring

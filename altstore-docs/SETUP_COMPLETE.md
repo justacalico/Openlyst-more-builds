@@ -9,7 +9,7 @@ https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/app
 
 **Faster CDN Alternative:**
 ```
-https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.json
+https://cdn.jsdelivr.net/gh/JustACalicos/Openlyst-more-builds@main/repo/apps.json
 ```
 
 ---

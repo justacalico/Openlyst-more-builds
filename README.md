@@ -38,8 +38,8 @@ Run the "Build All Repositories" workflow to update all repositories at once, or
 
 ## AltStore (iOS)
 
-- Add this Source URL in AltStore: `https://raw.githubusercontent.com/HttpAnimation/Openlyst-more-builds/main/repo/apps.json`
-- CDN URL (faster): `https://cdn.jsdelivr.net/gh/HttpAnimation/Openlyst-more-builds@main/repo/apps.json`
+- Add this Source URL in AltStore: `https://raw.githubusercontent.com/JustACalico/Openlyst-more-builds/main/repo/apps.json`
+- CDN URL (faster): `https://cdn.jsdelivr.net/gh/JustACalico/Openlyst-more-builds@main/repo/apps.json`
 
 **Notes:**
 - The source includes app permissions (privacy descriptions and entitlements) when available.
@@ -48,7 +48,7 @@ Run the "Build All Repositories" workflow to update all repositories at once, or
 
 ## F-Droid (Android)
 
-- Repository URL: `https://raw.githubusercontent.com/HttpAnimation/Openlyst-more-builds/main/fdroid-repo`
+- Repository URL: `https://raw.githubusercontent.com/JustACalico/Openlyst-more-builds/main/fdroid-repo`
 - Add this repository in F-Droid client to access OpenLyst Android apps.
 
 ---
@@ -58,20 +58,20 @@ Run the "Build All Repositories" workflow to update all repositories at once, or
 ### Quick Setup
 
 ```bash
-brew tap httpanimation/openlyst-more-builds
+brew tap justacalico/openlyst-more-builds
 ```
 
 ### Installation
 
 ```bash
 # Add the tap
-brew tap httpanimation/openlyst-more-builds https://github.com/HttpAnimation/Openlyst-more-builds.git
+brew tap justacalico/openlyst-more-builds https://github.com/justacalico/openlyst-more-builds.git
 
 # Install apps
-brew install httpanimation/openlyst-more-builds/app-name
+brew install justacalico/openlyst-more-builds/app-name
 
 # For cask applications on macOS
-brew install --cask httpanimation/openlyst-more-builds/app-name
+brew install --cask justacalico/openlyst-more-builds/app-name
 ```
 
 ### Available Commands
@@ -79,10 +79,10 @@ brew install --cask httpanimation/openlyst-more-builds/app-name
 | Command | Description |
 |---------|-------------|
 | `brew update` | Update the tap |
-| `brew search httpanimation/openlyst-more-builds/` | List available formulae |
-| `brew install httpanimation/openlyst-more-builds/app-name` | Install an application |
+| `brew search justacalico/openlyst-more-builds/` | List available formulae |
+| `brew install justacalico/openlyst-more-builds/app-name` | Install an application |
 | `brew uninstall app-name` | Uninstall an application |
-| `brew info httpanimation/openlyst-more-builds/app-name` | Get formula info |
+| `brew info justacalico/openlyst-more-builds/app-name` | Get formula info |
 
 ---
 
@@ -94,16 +94,16 @@ Docker images are published to GitHub Container Registry (ghcr.io) for web-based
 
 | App | Image | Description |
 |-----|-------|-------------|
-| Finar | `ghcr.io/httpanimation/finar` | Jellyfin web client |
+| Finar | `ghcr.io/justacalico/finar` | Jellyfin web client |
 
 ### Quick Start
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/httpanimation/<app-name>:latest
+docker pull ghcr.io/justacalico/<app-name>:latest
 
 # Run with default settings
-docker run -d -p 8080:80 ghcr.io/httpanimation/<app-name>:latest
+docker run -d -p 8080:80 ghcr.io/justacalico/<app-name>:latest
 ```
 
 ### Finar
@@ -112,13 +112,13 @@ A beautiful, modern Jellyfin client built with Flutter.
 
 ```bash
 # Pull the image
-docker pull ghcr.io/httpanimation/finar:latest
+docker pull ghcr.io/justacalico/finar:latest
 
 # Run the container
-docker run -d -p 8080:80 ghcr.io/httpanimation/finar:latest
+docker run -d -p 8080:80 ghcr.io/justacalico/finar:latest
 
 # Run with Jellyfin proxy (for CORS)
-docker run -d -p 8080:80 -e JELLYFIN_URL=http://your-jellyfin-server:8096 ghcr.io/httpanimation/finar:latest
+docker run -d -p 8080:80 -e JELLYFIN_URL=http://your-jellyfin-server:8096 ghcr.io/justacalico/finar:latest
 ```
 
 Then open http://localhost:8080 in your browser.
@@ -130,7 +130,7 @@ Example `docker-compose.yml`:
 ```yaml
 services:
   finar:
-    image: ghcr.io/httpanimation/finar:latest
+    image: ghcr.io/justacalico/finar:latest
     ports:
       - "8080:80"
     environment:

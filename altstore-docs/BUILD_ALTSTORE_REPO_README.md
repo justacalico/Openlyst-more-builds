@@ -20,7 +20,7 @@ https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/app
 
 **CDN Mirror (faster, optional):**
 ```
-https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.json
+https://cdn.jsdelivr.net/gh/JustACalicos/Openlyst-more-builds@main/repo/apps.json
 ```
 
 Both URLs are **permanently static** — the path never changes even after new builds. GitHub serves updates automatically with every commit.
