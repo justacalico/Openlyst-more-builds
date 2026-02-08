@@ -180,7 +180,7 @@ def sanitize_name(name: str, style: str = "class") -> str:
 class AltStoreBuilder:
     """Builder for AltStore repository JSON"""
     
-    def __init__(self, client: OpenLystClient, base_repo_url: str = "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo"):
+    def __init__(self, client: OpenLystClient, base_repo_url: str = "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo"):
         self.client = client
         self.base_repo_url = base_repo_url
     
@@ -437,7 +437,7 @@ class AltStoreBuilder:
 class FDroidBuilder:
     """Builder for F-Droid repository metadata"""
     
-    def __init__(self, client: OpenLystClient, base_repo_url: str = "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/fdroid-repo"):
+    def __init__(self, client: OpenLystClient, base_repo_url: str = "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/fdroid-repo"):
         self.client = client
         self.base_repo_url = base_repo_url
     
@@ -899,7 +899,7 @@ Examples:
     parser.add_argument(
         '--repo-url',
         type=str,
-        default='https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo',
+        default='https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo',
         help='Base URL for AltStore repository'
     )
     parser.add_argument(

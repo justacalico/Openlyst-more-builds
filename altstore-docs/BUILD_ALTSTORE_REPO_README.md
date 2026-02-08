@@ -15,7 +15,7 @@ This project automatically:
 
 **Add to AltStore:**
 ```
-https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json
+https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json
 ```
 
 **CDN Mirror (faster, optional):**

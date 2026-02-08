@@ -4,7 +4,7 @@
 
 **Add this URL to AltStore:**
 ```
-https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json
+https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json
 ```
 
 **Faster CDN Alternative:**
@@ -79,7 +79,7 @@ https://cdn.jsdelivr.net/gh/httpanimations/Openlyst-more-builds@main/repo/apps.j
 ### For Users
 1. Open AltStore → Browse
 2. Tap + button (top right)
-3. Paste: `https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json`
+3. Paste: `https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json`
 4. Tap Add
 
 ### For Local Testing

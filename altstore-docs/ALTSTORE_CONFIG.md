@@ -15,7 +15,7 @@ These URLs **never change** between builds:
 
 ### Primary Repository URL
 ```
-https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json
+https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json
 ```
 Served via GitHub Raw Content CDN (auto-updated with every commit)
 
@@ -27,7 +27,7 @@ Served via jsDelivr CDN for faster downloads globally (auto-purges on new commit
 
 ### Metadata URL
 ```
-https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/index.json
+https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/index.json
 ```
 
 ## Update Schedule
@@ -72,7 +72,7 @@ The generated JSON strictly follows the [AltStore source specification](https://
 
 **URL to add:**
 ```
-https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json
+https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json
 ```
 
 **Steps:**
@@ -95,7 +95,7 @@ https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/
 
 The URL structure is designed to be **permanent and unchanging**:
 
-- Base URL never changes: `https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo`
+- Base URL never changes: `https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo`
 - Endpoint never changes: `/apps.json`
 - Content is updated in-place with each commit
 - GitHub ensures 100% uptime as a CDN
@@ -107,7 +107,7 @@ Multiple ways to access the repository:
 
 1. **Primary - GitHub Raw Content** (100% uptime SLA):
    ```
-   https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/repo/apps.json
+   https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/repo/apps.json
    ```
 
 2. **Secondary - jsDelivr CDN** (global fast cache):

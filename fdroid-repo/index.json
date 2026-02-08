@@ -3,7 +3,7 @@
     "name": "OpenLyst F-Droid Repository",
     "description": "Free and open source Android applications from OpenLyst",
     "icon": "icon.png",
-    "address": "https://raw.githubusercontent.com/httpanimations/Openlyst-more-builds/main/fdroid-repo",
+    "address": "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/fdroid-repo",
     "timestamp": 1768760909747,
     "version": 21
   },
