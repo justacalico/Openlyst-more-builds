@@ -45,3 +45,5 @@ htmlcov/
 *.tmp
 *.bak
 .DS_Store
+android-keys/
+ANDROID_KEYS_MANIFEST.md
