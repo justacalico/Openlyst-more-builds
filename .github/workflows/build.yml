@@ -135,11 +135,12 @@ jobs:
 
       - name: Fix RepeatMode conflict with Flutter
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
@@ -538,11 +539,12 @@ jobs:
       - name: Fix RepeatMode conflict with Flutter
         shell: bash
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
@@ -1110,11 +1112,12 @@ jobs:
 
       - name: Fix RepeatMode conflict with Flutter
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
@@ -1507,11 +1510,12 @@ jobs:
 
       - name: Fix RepeatMode conflict with Flutter
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
@@ -2322,11 +2326,12 @@ jobs:
 
       - name: Fix RepeatMode conflict with Flutter
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
@@ -2947,11 +2952,12 @@ jobs:
 
       - name: Fix RepeatMode conflict with Flutter
         run: |
+          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
           AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
           if [ -f "$AUDIO_HANDLER" ]; then
-            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
             find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
             done
           fi
 
