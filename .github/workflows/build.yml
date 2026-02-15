@@ -133,6 +133,16 @@ jobs:
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
 
+      - name: Fix RepeatMode conflict with Flutter
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
+
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -524,6 +534,17 @@ jobs:
       - name: Checkout specific commit
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - name: Fix RepeatMode conflict with Flutter
+        shell: bash
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
 
       - name: Get version and date
         id: version
@@ -1087,6 +1108,16 @@ jobs:
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
 
+      - name: Fix RepeatMode conflict with Flutter
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
+
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -1473,6 +1504,16 @@ jobs:
       - name: Checkout specific commit
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - name: Fix RepeatMode conflict with Flutter
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -2279,6 +2320,16 @@ jobs:
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
 
+      - name: Fix RepeatMode conflict with Flutter
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
+
       - name: Install Linux dependencies
         run: |
           sudo apt-get update -qq
@@ -2893,6 +2944,16 @@ jobs:
       - name: Checkout specific commit
         if: ${{ github.event.inputs.doudou_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
+
+      - name: Fix RepeatMode conflict with Flutter
+        run: |
+          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
+          if [ -f "$AUDIO_HANDLER" ]; then
+            sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$AUDIO_HANDLER" && rm -f "$AUDIO_HANDLER.bak"
+            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
+              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q "RepeatMode" "$f" || { sed -i.bak 's/RepeatMode/AudioRepeatMode/g' "$f" && rm -f "${f}.bak"; }
+            done
+          fi
 
       - uses: subosito/flutter-action@v2
         with:
