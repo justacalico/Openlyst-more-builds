@@ -1662,6 +1662,7 @@ jobs:
     continue-on-error: true
     env:
       ANDROID_HOME: ${{ github.workspace }}/android-sdk
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
     outputs:
       version: ${{ steps.version.outputs.version }}
       build_date: ${{ steps.version.outputs.build_date }}
