@@ -41,10 +41,10 @@ on:
         type: boolean
         default: false
       finar_platforms:
-        description: 'Finar platforms (comma-separated: ios,android,windows,linux,macos,web,docker)'
+        description: 'Finar platforms (comma-separated: android,windows,linux,macos,web,docker)'
         required: false
         type: string
-        default: 'ios,android,windows,linux,macos,web,docker'
+        default: 'android,windows,linux,macos,web,docker'
       finar_commit_hash:
         description: 'Finar commit hash (leave empty for latest)'
         required: false
@@ -289,79 +289,6 @@ jobs:
         with:
           name: docan-ios
           path: docan-*-ios-unsigned.ipa
-
-  # IOS - FINAR
-  build-ios-finar:
-    if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'ios') }}
-    runs-on: macos-latest
-    continue-on-error: true
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      build_date: ${{ steps.version.outputs.build_date }}
-      duration: ${{ steps.duration.outputs.duration }}
-      status: ${{ steps.status.outputs.status }}
-    steps:
-      - name: Record start time
-        id: start
-        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
-
-      - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/finar.git .
-
-      - name: Checkout specific commit
-        if: ${{ github.event.inputs.finar_commit_hash != '' }}
-        run: git checkout ${{ github.event.inputs.finar_commit_hash }}
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Get version from pubspec
-        id: version
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
-          BUILD_DATE=$(date +%Y-%m-%d)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-
-      - name: Build iOS (No Code Signing)
-        run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build ios --release --no-codesign
-
-      - name: Create unsigned IPA
-        run: |
-          mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-ios-unsigned.ipa Payload/
-          rm -rf Payload
-
-      - name: Record duration and status
-        id: duration
-        if: always()
-        run: |
-          start_time="${{ steps.start.outputs.start_time }}"
-          start_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
-          end_seconds=$(date +%s)
-          if [ "$start_seconds" != "0" ]; then
-            duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
-          else
-            duration="N/A"
-          fi
-          echo "duration=$duration" >> $GITHUB_OUTPUT
-
-      - name: Set status
-        id: status
-        if: always()
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
-
-      - name: Upload iOS Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: finar-ios
-          path: finar-*-ios-unsigned.ipa
 
   # IOS - KLIT
   build-ios-klit:
@@ -751,7 +678,7 @@ jobs:
           name: docan-windows-x64-installer
           path: docan-*-windows-x64-setup.exe
 
-  # 3. BUILD WINDOWS - FINAR (x64)
+  # 3. BUILD WINDOWS - FINAR (x64) - Tauri 2
   build-windows-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'windows') }}
     runs-on: windows-latest
@@ -767,75 +694,43 @@ jobs:
         run: echo "start_time=$(Get-Date -Format 'o')" >> $env:GITHUB_OUTPUT
 
       - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/finar.git . 
+        run: git clone https://gitlab.com/Openlyst/finar.git .
 
       - name: Checkout specific commit
         if: ${{ github.event.inputs.finar_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.finar_commit_hash }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Get version and date
         id: version
         run: |
-          $version = (Select-String -Path pubspec.yaml -Pattern '^version:').Line -replace 'version: ', '' -replace '\+.*', ''
+          $version = (Get-Content package.json | ConvertFrom-Json).version
           $date = Get-Date -Format 'yyyy-MM-dd'
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "build_date=$date" >> $env:GITHUB_OUTPUT
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
+      - name: Install dependencies and build (Tauri)
+        run: |
+          npm ci
+          npx tauri build
 
-      - name: Build Windows
+      - name: Package Windows artifacts
         run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build windows --release
-      
-      - name: ZIP Windows Build
-        run: |
-          $filename = "finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64.zip"
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $filename
-
-      - name: Create Inno Setup Script
-        run: |
-          @"
-          [Setup]
-          AppName=Finar
-          AppVersion=${{ steps.version.outputs.version }}
-          AppPublisher=Openlyst
-          DefaultDirName={autopf}\Finar
-          DefaultGroupName=Finar
-          OutputDir=.
-          OutputBaseFilename=finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-windows-x64-setup
-          Compression=lzma2
-          SolidCompression=yes
-          ArchitecturesInstallIn64BitMode=x64compatible
-          WizardStyle=modern
-          UninstallDisplayIcon={app}\finar.exe
-          PrivilegesRequired=lowest
-          
-          [Languages]
-          Name: "english"; MessagesFile: "compiler:Default.isl"
-          
-          [Tasks]
-          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-          
-          [Files]
-          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-          
-          [Icons]
-          Name: "{group}\Finar"; Filename: "{app}\finar.exe"
-          Name: "{group}\{cm:UninstallProgram,Finar}"; Filename: "{uninstallexe}"
-          Name: "{autodesktop}\Finar"; Filename: "{app}\finar.exe"; Tasks: desktopicon
-          
-          [Run]
-          Filename: "{app}\finar.exe"; Description: "{cm:LaunchProgram,Finar}"; Flags: nowait postinstall skipifsilent
-          "@ | Out-File -FilePath installer.iss -Encoding UTF8
-
-      - name: Build Windows Installer
-        run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer.iss
+          $v = "${{ steps.version.outputs.version }}"
+          $d = "${{ steps.version.outputs.build_date }}"
+          $zipName = "finar-$v-$d-windows-x64.zip"
+          $setupName = "finar-$v-$d-windows-x64-setup.exe"
+          Compress-Archive -Path "src-tauri\target\release\*" -DestinationPath $zipName -Force
+          $nsisExe = Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($nsisExe) { Copy-Item $nsisExe.FullName -Destination $setupName }
 
       - name: Record duration and status
         id: duration
@@ -1256,7 +1151,7 @@ jobs:
           name: docan-macos
           path: docan-*-macos-unsigned.zip
 
-  # MACOS - FINAR
+  # MACOS - FINAR (Tauri 2)
   build-macos-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'macos') }}
     runs-on: macos-latest
@@ -1278,32 +1173,34 @@ jobs:
         if: ${{ github.event.inputs.finar_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.finar_commit_hash }}
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          channel: 'stable'
-          cache: true
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Get version from pubspec
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Get version from package.json
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          VERSION=$(node -p "require('./package.json').version")
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
-      - name: Build macOS (No Code Signing)
+      - name: Build macOS (Tauri, unsigned)
         run: |
-          flutter config --enable-macos-desktop
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build macos --release --build-name=${{ steps.version.outputs.version }}
+          npm ci
+          npx tauri build
         env:
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
 
       - name: Create ZIP (unsigned)
         run: |
-          cd build/macos/Build/Products/Release
+          cd src-tauri/target/release/bundle/macos
           zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-macos-unsigned.zip *.app
 
       - name: Record duration and status
@@ -1311,7 +1208,7 @@ jobs:
         if: always()
         run: |
           start_time="${{ steps.start.outputs.start_time }}"
-          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$start_time" +%s 2>/dev/null || echo 0)
+          start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${start_time%+*}" +%s 2>/dev/null || echo 0)
           end_seconds=$(date +%s)
           if [ "$start_seconds" != "0" ]; then
             duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
@@ -1758,11 +1655,13 @@ jobs:
             docan-*.apk
             docan-*.aab
 
-  # ANDROID - FINAR
+  # ANDROID - FINAR (Tauri 2)
   build-android-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'android') }}
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      ANDROID_HOME: ${{ github.workspace }}/android-sdk
     outputs:
       version: ${{ steps.version.outputs.version }}
       build_date: ${{ steps.version.outputs.build_date }}
@@ -1781,16 +1680,31 @@ jobs:
         if: ${{ github.event.inputs.finar_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.finar_commit_hash }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
+      - name: Install Android SDK and NDK
+        run: |
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          curl -sL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o cmdlinetools.zip
+          unzip -q cmdlinetools.zip
+          mv cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
 
       - name: Setup Android signing
         id: signing
@@ -1801,76 +1715,53 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.FINAR_KEY_ALIAS }}
         run: |
           set -euo pipefail
-
           if [[ -z "$ANDROID_KEYSTORE_BASE64" ]]; then
             echo "signing=debug" >> "$GITHUB_OUTPUT"
-            echo "No keystore configured, using debug signing"
             exit 0
           fi
-
-          echo "Setting up release signing..."
           STORE_PASSWORD=$(printf '%s' "$ANDROID_KEYSTORE_PASSWORD" | tr -d '\r')
           KEY_PASSWORD=$(printf '%s' "$ANDROID_KEY_PASSWORD" | tr -d '\r')
           KEY_ALIAS=$(printf '%s' "$ANDROID_KEY_ALIAS" | tr -d '\r')
-
-          if [[ -z "$STORE_PASSWORD" || -z "$KEY_PASSWORD" || -z "$KEY_ALIAS" ]]; then
-            echo "signing=debug" >> "$GITHUB_OUTPUT"
-            echo "Keystore secrets are incomplete, using debug signing"
-            exit 0
+          [[ -z "$STORE_PASSWORD" || -z "$KEY_PASSWORD" || -z "$KEY_ALIAS" ]] && { echo "signing=debug" >> "$GITHUB_OUTPUT"; exit 0; }
+          mkdir -p src-tauri/gen/android/app/keystore
+          if ! printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > src-tauri/gen/android/app/keystore/upload-keystore.jks 2>/dev/null; then
+            echo "signing=debug" >> "$GITHUB_OUTPUT"; exit 0
           fi
-
-          mkdir -p android/app/keystore
-          if ! printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > android/app/keystore/upload-keystore.jks 2>/dev/null; then
-            echo "signing=debug" >> "$GITHUB_OUTPUT"
-            echo "Keystore base64 is invalid, using debug signing"
-            exit 0
-          fi
-
-          if keytool -importkeystore -noprompt \
-            -srckeystore android/app/keystore/upload-keystore.jks \
-            -srcstorepass "$STORE_PASSWORD" \
-            -srcalias "$KEY_ALIAS" \
-            -srckeypass "$KEY_PASSWORD" \
-            -destkeystore /tmp/finar-keystore-check.jks \
-            -deststoretype JKS \
-            -deststorepass "$STORE_PASSWORD" \
-            -destkeypass "$KEY_PASSWORD" >/dev/null 2>&1; then
-            rm -f /tmp/finar-keystore-check.jks
-            cat > android/key.properties << EOF
+          if keytool -importkeystore -noprompt -srckeystore src-tauri/gen/android/app/keystore/upload-keystore.jks -srcstorepass "$STORE_PASSWORD" -srcalias "$KEY_ALIAS" -srckeypass "$KEY_PASSWORD" -destkeystore /tmp/finar-jks -deststoretype JKS -deststorepass "$STORE_PASSWORD" -destkeypass "$KEY_PASSWORD" >/dev/null 2>&1; then
+            rm -f /tmp/finar-jks
+            cat > src-tauri/gen/android/app/key.properties << EOF
           storePassword=$STORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
           storeFile=keystore/upload-keystore.jks
           EOF
             echo "signing=release" >> "$GITHUB_OUTPUT"
-            echo "Release signing is configured"
           else
-            rm -f android/key.properties /tmp/finar-keystore-check.jks
+            rm -f src-tauri/gen/android/app/key.properties /tmp/finar-jks
             echo "signing=debug" >> "$GITHUB_OUTPUT"
-            echo "Keystore validation failed, using debug signing"
           fi
 
-      - name: Get version from pubspec
+      - name: Get version from package.json
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
-          BUILD_NUMBER=$(date +%s | cut -c4-10)
+          VERSION=$(node -p "require('./package.json').version")
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
-      - name: Build APK
+      - name: Build Android (Tauri)
         run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build apk --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
-          mv build/app/outputs/flutter-apk/app-release.apk finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}.apk
+          npm ci
+          npx tauri android build --release
 
-      - name: Build AAB
+      - name: Copy and rename artifacts
         run: |
-          flutter build appbundle --release --build-name=${{ steps.version.outputs.version }} --build-number=${{ steps.version.outputs.build_number }}
-          mv build/app/outputs/bundle/release/app-release.aab finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}.aab
+          V=${{ steps.version.outputs.version }}
+          D=${{ steps.version.outputs.build_date }}
+          APK=$(find src-tauri/gen/android -name "*.apk" -path "*release*" | head -1)
+          AAB=$(find src-tauri/gen/android -name "*.aab" -path "*release*" | head -1)
+          [ -n "$APK" ] && cp "$APK" "finar-$V-$D.apk"
+          [ -n "$AAB" ] && cp "$AAB" "finar-$V-$D.aab"
 
       - name: Record duration and status
         id: duration
@@ -2555,7 +2446,7 @@ jobs:
             docan-*-linux-x64.zip
             artifacts/
 
-  # LINUX - FINAR
+  # LINUX - FINAR (Tauri 2)
   build-linux-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'linux') }}
     runs-on: ubuntu-latest
@@ -2582,78 +2473,49 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libmpv-dev dpkg-dev wget file squashfs-tools patchelf plocate libfuse2
-          # Update locate database
-          sudo updatedb || true
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev liblzma-dev libssl-dev
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          channel: 'stable'
-          cache: true
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Install appimagetool
-        run: |
-          wget -q -O /tmp/appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
-          chmod +x /tmp/appimagetool.AppImage
-          cd /tmp && ./appimagetool.AppImage --appimage-extract
-          sudo mv /tmp/squashfs-root /opt/appimagetool
-          sudo ln -sf /opt/appimagetool/AppRun /usr/local/bin/appimagetool
-          # Verify appimagetool works
-          appimagetool --version || echo "appimagetool installed"
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Get version from pubspec
+      - name: Get version from package.json
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          VERSION=$(node -p "require('./package.json').version")
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
-      - name: Build Linux
+      - name: Add appimage to bundle targets
         run: |
-          flutter config --enable-linux-desktop
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build linux --release --build-name=${{ steps.version.outputs.version }}
+          node -e "
+          const fs = require('fs');
+          const p = 'src-tauri/tauri.conf.json';
+          const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+          if (!c.bundle.targets.includes('appimage')) c.bundle.targets.push('appimage');
+          fs.writeFileSync(p, JSON.stringify(c, null, 2));
+          "
 
-      - name: Create ZIP
+      - name: Build Linux (Tauri)
         run: |
-          cd build/linux/x64/release
-          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-x64.zip bundle/
+          npm ci
+          npx tauri build
 
-      - name: Install fastforge and build packages
+      - name: Create ZIP and copy artifacts
         run: |
-          dart pub global activate fastforge
-          export PATH="$PATH:$HOME/.pub-cache/bin"
-          export PUB_CACHE="$HOME/.pub-cache"
+          V=${{ steps.version.outputs.version }}
+          D=${{ steps.version.outputs.build_date }}
           mkdir -p artifacts
-          
-          # Check for configuration files
-          echo "=== Checking configuration files ==="
-          ls -la linux/packaging/ || echo "No linux/packaging directory"
-          ls -la linux/packaging/deb/ 2>/dev/null || echo "No deb config"
-          ls -la linux/packaging/appimage/ 2>/dev/null || echo "No appimage config"
-          cat distribute_options.yaml 2>/dev/null || echo "No distribute_options.yaml"
-          
-          # Build DEB
-          echo "=== Building DEB package ==="
-          $HOME/.pub-cache/bin/fastforge package --platform linux --targets deb --skip-clean || echo "DEB build failed or had warnings"
-          
-          # Build AppImage
-          echo "=== Building AppImage package ==="
-          $HOME/.pub-cache/bin/fastforge package --platform linux --targets appimage --skip-clean || echo "AppImage build failed or had warnings"
-          
-          # Copy artifacts
-          echo "=== Copying artifacts ==="
-          find . -name "*.deb" -type f 2>/dev/null
-          find . -name "*.AppImage" -type f 2>/dev/null
-          find dist -name "*.deb" -exec cp {} artifacts/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-amd64.deb \; 2>/dev/null || true
-          find dist -name "*.AppImage" -exec cp {} artifacts/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-linux-x86_64.AppImage \; 2>/dev/null || true
-          
-          # List what we have
-          echo "=== Final Artifacts ==="
-          ls -la artifacts/ || true
-          ls -laR dist/ 2>/dev/null || true
+          cd src-tauri/target/release/bundle
+          zip -r $GITHUB_WORKSPACE/finar-$V-$D-linux-x64.zip .
+          find . -name "*.deb" -exec cp {} $GITHUB_WORKSPACE/artifacts/finar-$V-$D-linux-amd64.deb \; 2>/dev/null || true
+          find . -name "*.AppImage" -exec cp {} $GITHUB_WORKSPACE/artifacts/finar-$V-$D-linux-x86_64.AppImage \; 2>/dev/null || true
 
       - name: Record duration and status
         id: duration
@@ -3071,7 +2933,7 @@ jobs:
           name: docan-web
           path: docan-*-web.zip
 
-  # WEB - FINAR
+  # WEB - FINAR (Tauri 2 – Vite static build)
   build-web-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'web') }}
     runs-on: ubuntu-latest
@@ -3093,29 +2955,28 @@ jobs:
         if: ${{ github.event.inputs.finar_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.finar_commit_hash }}
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          channel: 'stable'
-          cache: true
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Get version from pubspec
+      - name: Get version from package.json
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          VERSION=$(node -p "require('./package.json').version")
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
-      - name: Build Web
+      - name: Build Web (Vite)
         run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+          npm ci
+          npm run build
 
       - name: Create ZIP
         run: |
-          cd build
-          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-web.zip web/
+          zip -r $GITHUB_WORKSPACE/finar-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-web.zip dist/
 
       - name: Record duration and status
         id: duration
@@ -3276,7 +3137,7 @@ jobs:
   # DOCKER BUILDS
   # ============================================================================
 
-  # DOCKER - FINAR
+  # DOCKER - FINAR (Tauri 2 – Vite dist served with nginx)
   build-docker-finar:
     if: ${{ github.event.inputs.build_finar == 'true' && contains(github.event.inputs.finar_platforms, 'docker') }}
     runs-on: ubuntu-latest
@@ -3298,13 +3159,45 @@ jobs:
         if: ${{ github.event.inputs.finar_commit_hash != '' }}
         run: git checkout ${{ github.event.inputs.finar_commit_hash }}
 
-      - name: Get version from pubspec
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get version from package.json
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
+          VERSION=$(node -p "require('./package.json').version")
           BUILD_DATE=$(date +%Y-%m-%d)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+      - name: Build frontend (Vite)
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create Dockerfile and nginx config (Vite + nginx)
+        run: |
+          mkdir -p docker
+          cat > docker/Dockerfile << 'DOCKERFILE'
+          FROM nginx:alpine
+          COPY dist /usr/share/nginx/html
+          COPY docker/nginx-default.conf /etc/nginx/conf.d/default.conf
+          EXPOSE 80
+          CMD ["nginx", "-g", "daemon off;"]
+          DOCKERFILE
+          cat > docker/nginx-default.conf << 'NGINX'
+          server {
+            listen 80;
+            root /usr/share/nginx/html;
+            index index.html;
+            location / {
+              try_files $uri $uri/ /index.html;
+            }
+          }
+          NGINX
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -3359,7 +3252,6 @@ jobs:
     needs: 
       - build-ios-doudou
       - build-ios-docan
-      - build-ios-finar
       - build-ios-klit
       - build-ios-opentorrent
       - build-windows-doudou
@@ -3604,13 +3496,12 @@ jobs:
             echo "" >> release_notes.md
           fi
           
-          # Finar
+          # Finar (Tauri 2 - no iOS)
           if [ "${{ github.event.inputs.build_finar }}" == "true" ]; then
             echo "### Finar" >> release_notes.md
             echo "- Version: ${{ needs.build-android-finar.outputs.version || needs.build-windows-finar.outputs.version || 'N/A' }}" >> release_notes.md
             echo "- Windows: ${{ needs.build-windows-finar.outputs.status || 'skipped' }} ${{ needs.build-windows-finar.outputs.duration && format('({0} min)', needs.build-windows-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- macOS: ${{ needs.build-macos-finar.outputs.status || 'skipped' }} ${{ needs.build-macos-finar.outputs.duration && format('({0} min)', needs.build-macos-finar.outputs.duration) || '' }} (unsigned)" >> release_notes.md
-            echo "- iOS: ${{ needs.build-ios-finar.outputs.status || 'skipped' }} ${{ needs.build-ios-finar.outputs.duration && format('({0} min)', needs.build-ios-finar.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-finar.outputs.status || 'skipped' }} ${{ needs.build-android-finar.outputs.duration && format('({0} min)', needs.build-android-finar.outputs.duration) || '' }} - Signing: ${{ needs.build-android-finar.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-finar.outputs.status || 'skipped' }} ${{ needs.build-linux-finar.outputs.duration && format('({0} min)', needs.build-linux-finar.outputs.duration) || '' }}" >> release_notes.md
             echo "- Web: ${{ needs.build-web-finar.outputs.status || 'skipped' }} ${{ needs.build-web-finar.outputs.duration && format('({0} min)', needs.build-web-finar.outputs.duration) || '' }}" >> release_notes.md
@@ -3663,7 +3554,6 @@ jobs:
           FAILED_BUILDS=""
           if [ "${{ needs.build-ios-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-iOS"; fi
           if [ "${{ needs.build-ios-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-iOS"; fi
-          if [ "${{ needs.build-ios-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-iOS"; fi
           if [ "${{ needs.build-ios-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-iOS"; fi
           if [ "${{ needs.build-ios-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-iOS"; fi
           if [ "${{ needs.build-windows-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Windows"; fi
