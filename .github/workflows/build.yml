@@ -1752,7 +1752,7 @@ jobs:
       - name: Build Android (Tauri)
         run: |
           npm ci
-          npx tauri android build --release
+          npx tauri android build -- --release
 
       - name: Copy and rename artifacts
         run: |
