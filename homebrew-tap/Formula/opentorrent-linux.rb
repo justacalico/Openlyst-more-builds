@@ -3,7 +3,7 @@ class Opentorrent < Formula
   homepage "https://openlyst.ink"
   url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/opentorrent-1.0.0-2026-02-08-linux-x64.zip"
   version "1.0.0"
-  sha256 "c114b1713e30292221787f285b9e9082a5a79ecd6d1a6f71f9474fdc1d8d19ae"
+  # sha256 "REPLACE_WITH_ACTUAL_SHA256"
 
   def install
     # Generic installation

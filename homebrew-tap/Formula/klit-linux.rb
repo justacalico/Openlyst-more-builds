@@ -3,7 +3,7 @@ class Klit < Formula
   homepage "https://openlyst.ink"
   url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/klit-7.0.0-2026-02-08-linux-x86_64.AppImage"
   version "7.0.0"
-  sha256 "fab639371bfe4e73139d57113036b0662e59b1e8b0881e93af45c48ad2492638"
+  # sha256 "REPLACE_WITH_ACTUAL_SHA256"
 
   def install
     # Generic installation
