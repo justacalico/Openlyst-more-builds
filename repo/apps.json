@@ -150,6 +150,14 @@
       "category": "other",
       "versions": [
         {
+          "version": "2.0.0",
+          "buildVersion": "1",
+          "date": "2026-02-17",
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-32/opentorrent-2.0.0-2026-02-17-ios-unsigned.ipa",
+          "size": 9654101,
+          "localizedDescription": "# 2.0.0\n\n- fixed sub-buttons on ios theme\n- fixed navbar white coloured on ios\n- better iso support\n- new ios theme\n- System option for design system\n- Change your login from the login screen\n- start on v2\n- Torznab search category label: show \"Adult\" instead of placeholder \"XXX\"\n- Add torrent page: scrollable layout so options and button do not overflow on small screens\n- Torrent detail: localized tab labels and loading/error/not-found messages\n- Login page: localized connection messages and default server name\n- Settings and server preferences: localized update-check messages and preferences saved / not connected\n- Torrent list: localized Select All tooltip, selected count, and delete confirmation\n- Adaptive navigation: use CupertinoPageRoute when design system is Cupertino (torrent list, settings, server selection)\n- Torrent list: Cupertino-style scaffold and nav bar when design system is Cupertino\n- Add torrent: Cupertino scaffold with segmented control when design system is Cupertino\n- Torrent detail: Cupertino scaffold with segmented control for tabs when design system is Cupertino\n- Desktop: minimize/close to system tray using window_manager and tray_manager\n- Desktop: global download/upload speed shown in sidebar (Material and Cupertino layouts)\n- Torrent list: fix \"No Material widget found\" for FilterChip when using Cupertino design (wrap filter bar in Material)\n- Fix Formatters usage: use formatDownloadSpeed/formatUploadSpeed instead of formatSpeedDown/formatSpeedUp"
+        },
+        {
           "version": "1.0.0",
           "buildVersion": "1",
           "date": "2026-01-14",
