@@ -89,12 +89,7 @@ brew install --cask justacalico/openlyst-more-builds/app-name
 
 ## AUR (Arch Linux)
 
-The "Build All Repositories" workflow can update these AUR packages from the [Openlyst API](https://openlyst.ink/docs/api):
-
-- [finar-bin](https://aur.archlinux.org/packages/finar-bin)
-- [klit-bin](https://aur.archlinux.org/packages/klit-bin)
-- [doudou-bin](https://aur.archlinux.org/packages/doudou-bin)
-- [docan-bin](https://aur.archlinux.org/packages/docan-bin)
+The "Build All Repositories" workflow can update AUR packages from the [Openlyst API](https://openlyst.ink/docs/api). Known packages (finar-bin, klit-bin, doudou-bin, docan-bin) are updated automatically; any **new app that has a Linux build** (e.g. opentorrent-bin) gets a PKGBUILD generated—create the package on AUR first (e.g. via the AUR website), then the workflow can push to it.
 
 To enable AUR pushes, add these GitHub repository secrets:
 

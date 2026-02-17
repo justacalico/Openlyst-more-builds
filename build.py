@@ -919,36 +919,52 @@ EOF
 }}
 '''
 
-    def build_pkgbuild(self, pkgname: str, slug: str, app: Dict, version: Dict) -> Optional[str]:
-        """Build PKGBUILD content for one AUR package."""
+    def build_pkgbuild(
+        self,
+        pkgname: str,
+        slug: str,
+        app: Dict,
+        version: Dict,
+        app_name: Optional[str] = None,
+        bundle_subdir: Optional[str] = 'bundle',
+        icon_path: Optional[str] = None,
+    ) -> Optional[str]:
+        """Build PKGBUILD content for one AUR package. If app_name/bundle_subdir/icon_path
+        are None, they are taken from AUR_PACKAGES when pkgname is known, else defaults."""
         linux_url = get_linux_zip_url(version)
         if not linux_url:
             logger.warning(f"No Linux zip URL for {slug}, skipping AUR {pkgname}")
             return None
         pkgver = version.get('version', '1.0.0')
         pkgrel = 1
-        _, app_name, bundle_subdir, icon_path = AUR_PACKAGES[pkgname]
+        if pkgname in AUR_PACKAGES:
+            _, app_name, bundle_subdir, icon_path = AUR_PACKAGES[pkgname]
+        else:
+            app_name = app_name or slug
+            bundle_subdir = bundle_subdir if bundle_subdir is not None else 'bundle'
+            icon_path = icon_path or 'data/flutter_assets/assets/icons/icon.png'
         pkgdesc = (app.get('subtitle') or app.get('name', '')).replace('"', "'")[:80]
         url = app.get('sourceCode') or app.get('website') or 'https://openlyst.ink'
         license_val = 'GPL3'
         if 'AGPL' in (app.get('license') or '').upper():
             license_val = 'AGPL3'
         depends = ['gtk3']
-        if 'mpv' in (pkgdesc + app.get('localizedDescription', '')).lower():
+        if 'mpv' in (pkgdesc + (app.get('localizedDescription') or '')).lower():
             depends.extend(['mpv', 'libmpv.so'])
         depends_str = " ".join(f"'{d}'" for d in depends)
-        # Categories/keywords from existing AUR PKGBUILDs
         cat_map = {
             'finar': 'AudioVideo;Video;Player',
             'klit': 'Network;Graphics',
             'doudou': 'Audio;Music;Player',
             'docan': 'Network;Chat;Utility',
+            'opentorrent': 'Network;FileTransfer;',
         }
         kw_map = {
             'finar': 'jellyfin;media;video;streaming;',
             'klit': 'e621;booru;privacy;',
             'doudou': 'music;streaming;audio;player;',
             'docan': 'ai;chat;assistant;llm;',
+            'opentorrent': 'torrent;download;',
         }
         categories = cat_map.get(slug, 'Utility')
         keywords = kw_map.get(slug, '')
@@ -977,10 +993,12 @@ sha256sums=('SKIP')
         return content
 
     def build(self, output_dir: Optional[str] = None) -> bool:
-        """Generate PKGBUILD for each AUR package."""
+        """Generate PKGBUILD for known AUR packages and any new app with a Linux build."""
         out = self.output_dir if output_dir is None else Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
+        built_slugs: Set[str] = set()
         success = 0
+        # Known AUR packages
         for pkgname, (slug, _, _, _) in AUR_PACKAGES.items():
             app = self.client.get_app_details(slug)
             if not app:
@@ -997,6 +1015,28 @@ sha256sums=('SKIP')
                 pkg_dir.mkdir(parents=True, exist_ok=True)
                 (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
                 logger.info(f"Wrote AUR PKGBUILD: {pkg_dir / 'PKGBUILD'}")
+                built_slugs.add(slug)
+                success += 1
+        # New apps with Linux zip that don't have an AUR package yet (e.g. opentorrent)
+        existing_slugs = {t[0] for t in AUR_PACKAGES.values()}
+        apps_linux = self.client.get_all_apps(platform="Linux")
+        for app in apps_linux or []:
+            slug = app.get('slug')
+            if not slug or slug in existing_slugs or slug in built_slugs:
+                continue
+            versions = self.client.get_app_versions(slug)
+            if not versions:
+                continue
+            latest = versions[0]
+            if not get_linux_zip_url(latest):
+                continue
+            pkgname = f"{slug}-bin"
+            content = self.build_pkgbuild(pkgname, slug, app, latest)
+            if content:
+                pkg_dir = out / pkgname
+                pkg_dir.mkdir(parents=True, exist_ok=True)
+                (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
+                logger.info(f"Wrote AUR PKGBUILD (new app): {pkg_dir / 'PKGBUILD'}")
                 success += 1
         if success == 0:
             logger.error("No AUR PKGBUILDs generated")
