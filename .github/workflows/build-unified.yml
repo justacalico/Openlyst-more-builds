@@ -79,7 +79,7 @@ jobs:
               docker run --rm \
                 -v "$PWD/aur-packages/$pkg:/pkg:rw" \
                 archlinux:latest \
-                bash -c "pacman -Syu --noconfirm base-devel 2>/dev/null; cd /pkg && makepkg --printsrcinfo > .SRCINFO"
+                bash -c "pacman -Syu --noconfirm base-devel 2>/dev/null; useradd -m -u 1000 builduser; chown -R builduser:builduser /pkg; su builduser -c 'cd /pkg && makepkg --printsrcinfo > .SRCINFO'"
             fi
           done
       
