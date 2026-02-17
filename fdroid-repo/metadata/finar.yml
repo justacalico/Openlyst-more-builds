@@ -8,15 +8,22 @@ SourceCode:
 IssueTracker: 
 
 AutoName: Finar
-Summary: Replacement frontend for Jellyfin
+Summary: Jellyfin frontend client
 
 Description: |
-    A beautiful, modern multi-platform Jellyfin client built with Flutter. Features native video playback powered by media_kit, glassmorphism design with blur effects and glass-like components, dark mode, offline support with Hive, and adaptive UI optimized for desktop, mobile, and TV.
+    Finar is a cross-platform Jellyfin client built with Flutter. It includes native playback with media_kit, offline support with Hive, and an adaptive interface for desktop, mobile, and TV.
 
 RepoType: git
 Repo: 
 
 Builds:
+
+  - versionName: '2.0.0'
+    versionCode: 1
+    commit: v2.0.0
+    subdir: app
+    gradle:
+      - yes
 
   - versionName: '1.1.0'
     versionCode: 1
@@ -25,5 +32,5 @@ Builds:
     gradle:
       - yes
 
-CurrentVersion: '1.1.0'
+CurrentVersion: '2.0.0'
 CurrentVersionCode: 1

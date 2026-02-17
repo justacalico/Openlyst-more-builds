@@ -18,8 +18,8 @@
       "name": "Docan",
       "bundleIdentifier": "docan",
       "developerName": "OpenLyst Developer",
-      "subtitle": "Universal AI chat application with Liquid Glass design",
-      "localizedDescription": "Docan is a universal AI chat application featuring a stunning Liquid Glass design. Connect with various AI providers and enjoy a seamless chat experience across all your devices.",
+      "subtitle": "AI chat app with Liquid Glass UI",
+      "localizedDescription": "Docan is a cross-platform AI chat app. Connect multiple providers and keep conversations in one interface across desktop, mobile, and web.",
       "iconURL": "https://openlyst.ink/icons/Docan/icon.png",
       "tintColor": "#6366f1",
       "category": "other",
@@ -28,8 +28,8 @@
           "version": "3.0.0",
           "buildVersion": "1",
           "date": "2026-01-11",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-46/docan-3.0.0-2026-01-13-ios-unsigned.ipa",
-          "size": 10700875,
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/docan-3.0.0-2026-02-08-ios-unsigned.ipa",
+          "size": 10731145,
           "localizedDescription": "# 3.0.0\n\n## New Features\n\n### AI Providers\n- Added DeepSeek AI support with `deepseek-chat` and `deepseek-reasoner` models.\n- Added LM Studio support with OpenAI-compatible API.\n- Dynamic model fetching from API.\n\n### Image Creator\n- Added dedicated Image Creator screen for generating images with AI.\n- Supports Gemini and OpenAI DALL-E providers.\n\n### Playbooks\n- Added Playbooks: User-created YAML integrations for extending Docan.\n- Create custom API integrations with a simple YAML SDK.\n\n### Attachments & Drag-and-Drop\n- Added support for attachments in chat.\n- Drag and drop files directly onto the app."
         }
       ],
@@ -44,33 +44,34 @@
       "bundleIdentifier": "doudou",
       "developerName": "OpenLyst Developer",
       "subtitle": "Music player for self-hosted services",
-      "localizedDescription": "Break free from corporate streaming platforms. Doudou connects to your self-hosted music services like Jellyfin, Plex, and Navidrome, giving you complete control over your music library.",
+      "localizedDescription": "Doudou is a music player for self-hosted libraries. Connect Jellyfin, Plex, or Navidrome and listen from your own servers.",
       "iconURL": "https://gitlab.com/Openlyst/doudou/-/raw/main/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png?ref_type=heads",
       "tintColor": "#dc2626",
       "category": "other",
       "versions": [
         {
+          "version": "14.0.0",
+          "buildVersion": "1",
+          "date": "2026-02-16",
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-31/doudou-14.0.0-2026-02-16-ios-unsigned.ipa",
+          "size": 14076776,
+          "localizedDescription": "# 14.0.0\n\n- New UI for both desktop and mobile.\n- Don't show desktop sidebar when on small screens.\n- Remove logging.\n- Expand the about Doudou section.\n- Port the old navbar.\n- Settings scales.\n- New app layouts.\n- Port the now playing screen.\n- Spec bump to 14.0.0.\n- Mobile track now goes left from right.\n- Lyrics icon is now a microphone; only shown when lyrics are available.\n- Fixed animation when reversing a song."
+        },
+        {
+          "version": "13.0.0",
+          "buildVersion": "1",
+          "date": "2026-02-15",
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-22/doudou-13.0.0-2026-02-15-ios-unsigned.ipa",
+          "size": 13899549,
+          "localizedDescription": "# 13.0.0\n\n- Version bump to 13.0.0."
+        },
+        {
           "version": "12.0.1",
           "buildVersion": "1",
           "date": "2026-01-15",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-53/doudou-12.0.1-2026-01-15-ios-unsigned.ipa",
-          "size": 13809153,
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/doudou-12.1.0-2026-02-08-ios-unsigned.ipa",
+          "size": 13810154,
           "localizedDescription": "# 12.0.1\n\n- Updated donate URL | https://openlyst.ink/support\n- Version bump to 12.0.1\n- Haptic feedback for favorite button"
-        },
-        {
-          "version": "12.0.0",
-          "buildVersion": "1",
-          "date": "2026-01-13",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-45/doudou-12.0.0-2026-01-13-ios-unsigned.ipa",
-          "size": 13809264,
-          "localizedDescription": "# 12.0.0\n\n## Added\n- Added Downloads page to desktop UI with full download management support.\n- Added Download button to track context menu in desktop UI for offline listening.\n- Added track options menu to desktop now playing bar with queue, playlist, album, artist, and download actions.\n- Added \"Check for Updates\" feature to mobile and desktop settings that checks the OpenLyst API for new versions.\n- Added album art carousel to mobile now playing screen with rotary-style animation; swipe or tap side albums to change tracks.\n\n## Fixed\n- Fixed \\\"No CupertinoLocalizations found\\\" error on mobile pages by using GlobalCupertinoLocalizations delegate.\n- Fixed Windows unable to play any music by initializing JustAudioMediaKit for all desktop platforms (Windows, macOS, Linux).\n- Fixed Windows local music playback by using correct `file:///` URI format for Windows paths.\n- Fixed SMTC artwork loading errors on Windows when playing local music files.\n- Fixed local music album covers not displaying on desktop by adding support for file:// URIs in image widgets.\n- Fixed local music metadata (title, artist, album, duration) not being read from ID3 tags by adding `audiotags` package.\n- Fixed local music albums with various artists creating duplicate album entries by using album artist or folder path for grouping.\n- Fixed local music embedded album art not being extracted from audio files.\n- Fixed desktop home page \"See All\" buttons and Quick Access cards not navigating to their respective pages.\n- Fixed desktop play bar and now playing overlay not showing album art for local music files.\n- Fixed mobile UI not displaying album art for local music files (home, playlists, queue, track lists, album/playlist detail views).\n- Fixed mobile albums page showing yellow underlined text for album names and artist names.\n- Fixed mobile image loading showing error state while loading local files instead of proper placeholder.\n- Fixed mobile songs and favorites pages showing \"BOTTOM OVERFLOWED BY 1.00 PIXELS\" error by increasing item extent to match actual content height.\n- Fixed mobile search saving every keystroke as a recent search; now only committed searches (submit/tap) are saved.\n- Fixed adding local music on android.\n- Fixed `use_build_context_synchronously` warnings in Quick Connect authentication flow.\n- Fixed `use_build_context_synchronously` warning in local music settings artwork cache clearing.\n- Fixed `use_build_context_synchronously` warning in settings local music scan completion.\n- Fixed downloads not working for Navidrome/Subsonic servers by updating DownloadService to use MediaServiceManager for multi-platform support.\n- Fixed overflow issues on Downloads page for album cards and track list actions.\n- Fixed desktop volume slider UI not updating when dragging or clicking mute button.\n- Fixed VR headsets loading the Android Auto UI.\n- Fixed Account Information section not displaying for Navidrome, Subsonic, Plex, and Swing Music servers.\n- Fixed Windows volume slider bypassing system volume mixer by disabling WASAPI exclusive mode.\n- Fixed desktop light mode to apply across the UI instead of only partially updating.\n- Fixed local music \"Continue\" button not navigating to home screen after successful login.\n- Fixed Subsonic/Navidrome login not navigating to home screen after successful authentication by adding explicit navigation.\n- Fixed mobile queue overlay showing yellow underlined text by adding proper Material wrapper and TextDecoration.none styles.\n\n## Changed\n- Added \"Smart back\" audio toggle (mobile + desktop): if over 20% into a track, first back resets to 0:00; a quick second back goes to the previous track.\n- Simplified desktop settings layout to show only implemented options and clean up unused toggles.\n- Removed icons from home page section headers and shuffle buttons for cleaner mobile UI.\n- Removed emojis from login screen feature pills for a more professional appearance.\n- **Major codebase cleanup**: Removed all debug print statements (`kDebugMode` blocks) and verbose comments from 87 dart files across the entire codebase including screens, services, providers, widgets, models, and desktop folders.\n- Simplified navigation bar code structure.\n- Removed unused `_debugLinuxMpv()` function (~145 lines) from main.dart.\n- Dynamic Isle Player is now disabled by default.\n- Moved the UI to a new folder UI.\n- Refactored mobile Settings screen to use reusable components.\n- Hide Downloads page/tab when using local music mode (since files are already local).\n- Replaced desktop home page quick access cards (Liked Songs, All Albums, All Artists, Shuffle All) with two focused buttons: \"Shuffle All\" and \"Shuffle Favorites\".\n- Removed Quick Access section from mobile library page for a cleaner layout.\n\n## Performance\n- Cached `ImageFilter.blur` instances across mobile UI to prevent GPU recomputation on every frame (liquid_glass, mini_player, library, search, favorites).\n- Converted `Consumer<AppState>` to `Selector<AppState>` with `shouldRebuild` in home, library, songs, and search screens to reduce unnecessary widget rebuilds.\n- Added 300ms debounce timer to search input to reduce CPU usage during typing.\n- Added `itemExtent` and `cacheExtent` to `ListView.builder` widgets in home screen for smoother scrolling.\n- Changed `SliverList` to `SliverFixedExtentList` with fixed item heights in songs and favorites screens for better scroll performance.\n- Wrapped expensive `BackdropFilter` widgets in `RepaintBoundary` to isolate repaints.\n\n## Removed\n- Removed non-functional Google Cardboard VR player feature (entire `lib/cardboard` folder and related settings).\n- Removed non-functional audio settings: Normalize Volume, Gapless Playback, and Autoplay.\n- Removed Swing Music support.\n- Removed non-functional Collections and Genres sections from mobile library view."
-        },
-        {
-          "version": "11.0.0",
-          "buildVersion": "1",
-          "date": "2026-01-09",
-          "downloadURL": "https://files.catbox.moe/smjwse.ipa",
-          "localizedDescription": "# 11.0.0\n\n## Added\n\n- **Desktop System Media Controls** - Control playback from your OS taskbar/system tray without focusing Doudou.\n- **Google Assistant Support** - Voice commands for Android via Google Assistant App Actions.\n- **Autoplay** - Automatically plays similar music when the queue ends.\n- Added favorite button to the desktop fullscreen Now Playing overlay.\n- Added Easter Egg: Desktop Now Playing view flips horizontally when \"The Mind Electric\" plays its reversed section.\n\n## Changed\n\n- Refactored audio system from 4 platform-specific handlers into a single cross-platform UnifiedAudioHandler.\n- **Complete Desktop UI Redesign** with modern styling.\n\n## Fixed\n\n- Fixed mounted check issues causing setState calls after widget disposal.\n- Fixed Now Playing overlay not updating when the current song changes."
         }
       ],
       "appPermissions": {
@@ -89,18 +90,26 @@
       "name": "Finar",
       "bundleIdentifier": "finar",
       "developerName": "OpenLyst Developer",
-      "subtitle": "Replacement frontend for Jellyfin",
-      "localizedDescription": "A beautiful, modern multi-platform Jellyfin client built with Flutter. Features native video playback powered by media_kit, glassmorphism design with blur effects and glass-like components, dark mode, offline support with Hive, and adaptive UI optimized for desktop, mobile, and TV.",
+      "subtitle": "Jellyfin frontend client",
+      "localizedDescription": "Finar is a cross-platform Jellyfin client built with Flutter. It includes native playback with media_kit, offline support with Hive, and an adaptive interface for desktop, mobile, and TV.",
       "iconURL": "https://gitlab.com/Openlyst/finar/-/raw/main/icon.svg?ref_type=heads",
       "tintColor": "#6366f1",
       "category": "other",
       "versions": [
         {
+          "version": "2.0.0",
+          "buildVersion": "1",
+          "date": "2026-02-13",
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-13/finar-1.1.0-2026-02-13-ios-unsigned.ipa",
+          "size": 15669454,
+          "localizedDescription": "# 2.0.0\n\n- Version bump to 2.0.0.\n- Header now shows TV show name and episode.\n- Desktop search bar now spans the full width.\n- Removed the extra season picker for TV shows.\n- Opening an episode now takes you to the show page with that season expanded.\n- 'See All' buttons now work.\n- On-screen controls appear when you move the mouse.\n- On-screen controls auto-hide after a short delay.\n- Fixed card clipping.\n- Fixed desktop detail clipping/overflow by letting action controls wrap on smaller widths.\n- Fixed desktop detail action bar overflow on narrow widths by using a single-row horizontal action strip.\n- Resizing between desktop and mobile layouts now keeps page context (detail/player/library/downloads/settings).\n- Updated the desktop Details panel to use liquid glass styling.\n- Desktop sidebar profile card now hides the server URL and shows a user avatar (with initials fallback).\n- Focus/hover outlines on media cards now adapt to artwork colors instead of a fixed accent.\n- Updated the desktop Trailer button to match the liquid-glass style used by other controls.\n- Trailer playback flow now works end-to-end: local trailers play in-app, and remote trailers open through URL launcher with URL normalization."
+        },
+        {
           "version": "1.1.0",
           "buildVersion": "1",
           "date": "2026-01-11",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-47/finar-1.1.0-2026-01-13-ios-unsigned.ipa",
-          "size": 15584555,
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/finar-1.1.0-2026-02-08-ios-unsigned.ipa",
+          "size": 15584558,
           "localizedDescription": "# 1.1.0\n\n## Fixed\n- Fixed controller input in SteamOS"
         }
       ]
@@ -110,7 +119,7 @@
       "bundleIdentifier": "klit",
       "developerName": "OpenLyst Developer",
       "subtitle": "E926 API client",
-      "localizedDescription": "The successor to BaoBao. A modern, privacy-focused client for the e621 community. Built with user experience and data protection as top priorities.",
+      "localizedDescription": "Klit is the successor to BaoBao, built for the e621 community with privacy-focused defaults and a fast browsing workflow.",
       "iconURL": "https://openlyst.ink/icons/Klit/icon.png",
       "tintColor": "#ff6b35",
       "category": "other",
@@ -119,25 +128,9 @@
           "version": "7.0.0",
           "buildVersion": "1",
           "date": "2026-01-18",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-60/klit-7.0.0-2026-01-18-ios-unsigned.ipa",
-          "size": 15262387,
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/klit-7.0.0-2026-02-08-ios-unsigned.ipa",
+          "size": 15262389,
           "localizedDescription": "# 7.0.0\n\n- Updates version to **7.0.0**.\n- Updated description to \"E926 API client\"\n\n## Added\n\n### 🔄 Pull-to-Refresh on Mobile Home Page\n- Added native pull-down-to-refresh support on the mobile Home page\n- Swipe down from the top of the post grid to refresh latest posts\n- Smooth refresh indicator animation with haptic feedback\n\n### ⌨️ Keyboard Controls for Mobile Post Viewer\nAdded keyboard navigation support to the mobile post detail viewer, matching the desktop experience:\n\n**Navigation:**\n- `A` / `←` — Previous post\n- `D` / `→` — Next post\n\n**Actions:**\n- `F` — Toggle favorite\n- `W` / `↑` — Upvote (toggle)\n- `S` / `↓` — Downvote (toggle)\n\n### 📱 Material Style Navigation Bar\n- Added a proper Material-style bottom navigation bar when Material UI mode is enabled\n- Full-width design with simple icon/label layout (no floating pill style)\n- Clean top border separator instead of shadow/blur effects\n- Consistent with Android Material Design guidelines\n\n### ⚙️ Material Style Settings Page\n- Settings page now responds to UI style mode\n- Material mode uses solid containers without blur effects\n- Clean borders and simple dividers in Material mode\n- Removes glass effects and shadows for better performance on lower-end devices\n\n### 🌈 Rating Aura on Post Cards\n- Posts now display a colored glow/aura around the card based on content rating\n- **Green** — Safe content\n- **Orange** — Questionable content\n- **Red** — Explicit content\n- Removed the text badge from the bottom-left corner for a cleaner look\n- Rating is now instantly visible at a glance without reading text\n- **Liquid Glass mode**: Enhanced glass-like aura with layered glows, soft outer bloom, and subtle highlight reflection\n- **Material mode**: Simple, performance-focused aura effect\n\n### 📐 Centralized Post Grid Settings\n- New **POST GRID** section in Settings with comprehensive controls:\n  - **Auto Mode** — Automatically adjusts grid columns based on screen width (2 cols for phones, 3 for tablets, up to 8 for large monitors)\n  - **Grid Size** — Manual control for number of columns (disabled when Auto Mode is on)\n  - **Spacing** — Slider to control gap between post cards (0-16pt)\n  - **Padding** — Slider to control outer padding around the grid (0-24pt)\n  - **Score Threshold** — Configurable minimum score filter for latest posts (0-100, default: 20). Posts automatically reload when changed.\n- Added same POST GRID settings to desktop settings page (Content section)\n- Removed per-page grid size controls from Home, Hot, Popular, Favorites, and Search pages\n- Removed grid size selectors from desktop toolbar (Home, Hot, Popular, Favorites, Search)\n- All pages now use centralized settings for consistent appearance\n\n### 🚫 Blacklist Management\n- New **BLACKLIST** section in Settings (mobile and desktop):\n  - **Enable Blacklist** — Toggle to enable/disable blacklist filtering globally\n  - **Manage Blacklist** — Opens dedicated page to edit blacklist rules\n- **Blacklist Settings Page** with full management:\n  - **Sync from Account** — Pull blacklisted tags from your e621/e926 account\n  - **Text Editor** — Edit blacklist entries directly (one tag/rule per line)\n  - **Help Dialog** — Documents blacklist syntax (AND logic, rating filters, wildcards, metatags)\n  - Shows active rule count and enabled status\n- All pages automatically filter posts based on blacklist rules\n\n## Fixed\n\n### 🎊 Left-Handed Mode Confetti Position\n- Fixed confetti animation playing from the wrong side when left-handed mode is enabled\n- Confetti now correctly originates near the favorite button position in both left and right-handed modes\n\n### 📐 Auto Mode Grid Scaling\n- Fixed auto mode only using up to 4 columns even on large screens\n- Auto mode now scales properly: 2 cols (phones) → 3 (tablets) → 4-5 (small desktops) → 6-8 (large monitors)\n- Grid now properly responds to window resizing using LayoutBuilder\n\n### 🔍 Tag Suggestions Overhaul\n- **Fixed `-tag` and `~tag` prefix handling**: Tag suggestions now properly work when typing exclusion tags (e.g., `-scat`, `-young`) or optional tags (`~tag`)\n- **Fixed suggestions closing unexpectedly**: Removed aggressive focus-based closing that caused suggestions to disappear while typing\n- **Fixed suggestions appearing when not wanted**: Suggestions now only appear when actively typing a tag (2+ characters)\n- **Tap outside to close**: Suggestions close when tapping anywhere outside the suggestion list\n- **Better word detection**: Properly extracts the current word being typed, handling cursor position correctly\n- **Prefix preservation**: When selecting a suggestion for `-tag` or `~tag`, the prefix is correctly preserved\n\n### 🖼️ Full Resolution Image Loading\n- Fixed mobile post viewer not loading full resolution images\n- Mobile now uses the same resolution priority as desktop: full file → sample → preview\n- Fixes issues with small images (e.g., 512x512) not displaying at full quality on alternative servers"
-        },
-        {
-          "version": "6.0.0",
-          "buildVersion": "1",
-          "date": "2026-01-13",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-49/klit-6.0.0-2026-01-14-ios-unsigned.ipa",
-          "size": 15235590,
-          "localizedDescription": "# 6.0.0\n\n## Added\n\n### 🎮 Gamepad & Controller Support (Desktop)\nFull gamepad/controller support for desktop UI — SteamOS and Steam Deck compatible.\n\n**Post Detail View Controls:**\n- `LB` / `RB` — Navigate between posts\n- `A` — Toggle fullscreen\n- `B` — Close/go back\n- `Y` — Toggle favorite\n- `RT` — Upvote\n- `X` — Downvote\n- Thumbstick / D-pad — Sidebar menu navigation\n- Visual button hints overlay when controller is connected\n- Haptic feedback for all actions\n\n**Login Screen Controls:**\n- D-pad — Navigate between form fields and buttons\n- `A` — Select/activate focused item\n- `Y` — Quick guest login\n- `X` — Toggle custom host\n- Visual focus indicators on all interactive elements\n\n**New Input System:**\n- `GamepadController` service for centralized input handling\n- `GamepadInputMixin` for easy widget integration\n\n### 💾 Desktop Download Functionality\n- Download posts directly from the detail view\n- Files saved to user's Downloads folder with progress indicator\n- Confirmation dialog with option to open folder\n- Automatic detection of existing files\n\n### 📱 Live Responsive UI\n- Automatic switching between mobile and desktop layouts on window resize\n- Post detail, search, favorites, and profile pages all support live layout switching\n- Threshold: Desktop UI at ≥1024px width, Mobile UI below\n\n### 🔗 Shared Navigation State\n- Current page preserved when resizing between mobile and desktop\n- Navigation indices automatically mapped between UI modes\n- Seamless experience when switching layouts\n\n### 🎬 Video Settings\nNew video settings section in both mobile and desktop settings:\n- **Auto Play** — Control whether videos automatically play when viewing posts\n- **Mute by Default** — Start videos muted to avoid unexpected audio\n- Settings apply to both inline video player and fullscreen viewer\n\n### 🔄 Check for Updates\n- \"Check for Updates\" option in About section (mobile and desktop)\n- Fetches latest version info via Openlyst API\n- Shows current vs latest version comparison\n- Direct link to download page when update available\n- Glassmorphic dialog design on desktop\n- Graceful network error handling\n\n### 🔒 Search History Privacy\n- Toggle to disable search history recording (mobile and desktop)\n- New \"Data\" category in desktop settings\n- Clear search history button with item count\n- When disabled, searches are not saved to history\n\n---\n\n## Changed\n\n### 📦 Dependency Updates\n| Package | From | To |\n|---------|------|-----|\n| dio | ^5.4.0 | ^5.9.0 |\n| flutter_secure_storage | ^9.2.2 | ^10.0.0 |\n| provider | ^6.1.2 | ^6.1.5+1 |\n| shared_preferences | ^2.2.3 | ^2.5.4 |\n| connectivity_plus | ^6.0.3 | ^7.0.0 |\n| video_player | ^2.8.0 | ^2.10.1 |\n| chewie | ^1.8.0 | ^1.13.0 |\n| media_kit | ^1.2.3 | ^1.2.6 |\n| url_launcher | ^6.2.5 | ^6.3.2 |\n| flutter_launcher_icons | ^0.14.3 | ^0.14.4 |\n\n### 🎨 UI Improvements\n\n**Sidebar Collapse Button:**\n- Animated icon rotation when toggling\n- \"Collapse\" label with chevron indicator in expanded mode\n- Tooltip for better accessibility\n- Enhanced hover effects with purple gradient and shadow\n- Better visual consistency in both states\n\n**Desktop Time Range Selector (Hot & Popular Pages):**\n- Modern glassmorphic design with purple/indigo gradient theme\n- Hover effects on time range options (Today, This Week, This Month)\n- Sleek calendar button with divider separator\n- Desktop-optimized date picker dialog with gradient styling\n- Enhanced \"Done\" button with purple gradient\n- Full date format (MMM d, yyyy) for custom date selection\n\n**Account Management Page:**\n- Responsive layout adapting to desktop and mobile\n- Glassmorphic design with backdrop blur effects on desktop\n- Gradient header with stylish back button\n- Improved account cards with hover effects and gradient active state\n- Desktop-optimized modal dialogs\n- Consistent purple/indigo gradient theme\n\n---\n\n## Fixed\n\n- Fixed `use_build_context_synchronously` warnings in account management page by adding proper mounted checks after async operations\n- Fixed tag suggestion popup not closing when clicking search button with meta tags (e.g., \"video\")\n- Fixed tag suggestions appearing when search field is not focused\n- Tag suggestion overlay now properly checks focus state before displaying\n- Cancels pending tag fetch requests when searching to prevent race conditions\n\n---\n\n## Removed\n\n### 🗑️ List View Option\nRemoved list view from the entire app for a cleaner, more consistent experience:\n- Home, Hot, Popular, and Search pages now use grid view only\n- Removed grid/list toggle button from toolbars\n- Removed `PostsList` widget\n- Removed `ViewToggleButton` widget\n- Removed `PostListShimmer` widget"
-        },
-        {
-          "version": "5.0.0",
-          "buildVersion": "1",
-          "date": "2026-01-12",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-25/klit-5.0.0-2026-01-12-ios-unsigned.ipa",
-          "size": 15176419,
-          "localizedDescription": "# 5.0.0\n\n- Fixed account manager not working.\n- Reload all data when switching accounts.\n- Fixed some platforms not having icons."
         }
       ],
       "screenshots": [
@@ -150,8 +143,8 @@
       "name": "Opentorrent",
       "bundleIdentifier": "opentorrent",
       "developerName": "OpenLyst Developer",
-      "subtitle": "qBittorrent client.",
-      "localizedDescription": "Manage your torrents with Opentorrent, a cross-platform qBittorrent client that brings seamless torrenting to iOS, macOS, Windows, Linux, Android, and the Web.",
+      "subtitle": "qBittorrent client",
+      "localizedDescription": "Opentorrent is a cross-platform qBittorrent client for iOS, macOS, Windows, Linux, Android, and web.",
       "iconURL": "https://gitlab.com/Openlyst/opentorrent/-/raw/main/assets/icons/app_icon.png?ref_type=heads",
       "tintColor": "#dc2626",
       "category": "other",
@@ -160,8 +153,8 @@
           "version": "1.0.0",
           "buildVersion": "1",
           "date": "2026-01-14",
-          "downloadURL": "https://github.com/justacalico/openlyst-more-builds/releases/download/build-52/opentorrent-1.0.0-2026-01-14-ios-unsigned.ipa",
-          "size": 9385199,
+          "downloadURL": "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/opentorrent-1.0.0-2026-02-08-ios-unsigned.ipa",
+          "size": 9384944,
           "localizedDescription": "Initial release of Opentorrent, a cross-platform qBittorrent client that brings seamless torrenting to iOS, macOS, Windows, Linux, Android, and the Web."
         }
       ],

@@ -8,10 +8,10 @@ SourceCode:
 IssueTracker: 
 
 AutoName: Opentorrent
-Summary: qBittorrent client.
+Summary: qBittorrent client
 
 Description: |
-    Manage your torrents with Opentorrent, a cross-platform qBittorrent client that brings seamless torrenting to iOS, macOS, Windows, Linux, Android, and the Web.
+    Opentorrent is a cross-platform qBittorrent client for iOS, macOS, Windows, Linux, Android, and web.
 
 RepoType: git
 Repo: 

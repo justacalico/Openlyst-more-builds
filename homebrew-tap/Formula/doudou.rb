@@ -1,9 +1,9 @@
 class Doudou < Formula
   desc "Music player for self-hosted services"
   homepage "https://openlyst.ink"
-  url "https://github.com/justacalico/openlyst-more-builds/releases/download/build-53/doudou-12.0.1-2026-01-15-macos-unsigned.zip"
-  version "12.0.1"
-  sha256 "f15b367ba9916d7c97178d7f499758c3f8310787529436c369af3fabd3a74371"
+  url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-31/doudou-14.0.0-2026-02-16-macos-unsigned.zip"
+  version "14.0.0"
+  sha256 "cf65399556147d3573a4ed236e0c2d6853624eed12c653d8c4c5d22126a5f17d"
 
   def install
     # Generic installation

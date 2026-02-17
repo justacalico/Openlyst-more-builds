@@ -4,7 +4,7 @@
     "description": "Free and open source Android applications from OpenLyst",
     "icon": "icon.png",
     "address": "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/fdroid-repo",
-    "timestamp": 1768760909747,
+    "timestamp": 1771287490585,
     "version": 21
   },
   "requests": {
@@ -15,98 +15,98 @@
     {
       "packageName": "docan",
       "name": "Docan",
-      "summary": "Universal AI chat application with Liquid Glass design",
+      "summary": "AI chat app with Liquid Glass UI",
       "icon": "https://openlyst.ink/icons/Docan/icon.png",
-      "description": "Docan is a universal AI chat application featuring a stunning Liquid Glass design. Connect with various AI providers and enjoy a seamless chat experience across all your devices.",
+      "description": "Docan is a cross-platform AI chat app. Connect multiple providers and keep conversations in one interface across desktop, mobile, and web.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     },
     {
       "packageName": "doudou",
       "name": "Doudou",
       "summary": "Music player for self-hosted services",
       "icon": "https://gitlab.com/Openlyst/doudou/-/raw/main/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png?ref_type=heads",
-      "description": "Break free from corporate streaming platforms. Doudou connects to your self-hosted music services like Jellyfin, Plex, and Navidrome, giving you complete control over your music library.",
+      "description": "Doudou is a music player for self-hosted libraries. Connect Jellyfin, Plex, or Navidrome and listen from your own servers.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     },
     {
       "packageName": "finar",
       "name": "Finar",
-      "summary": "Replacement frontend for Jellyfin",
+      "summary": "Jellyfin frontend client",
       "icon": "https://gitlab.com/Openlyst/finar/-/raw/main/icon.svg?ref_type=heads",
-      "description": "A beautiful, modern multi-platform Jellyfin client built with Flutter. Features native video playback powered by media_kit, glassmorphism design with blur effects and glass-like components, dark mode, offline support with Hive, and adaptive UI optimized for desktop, mobile, and TV.",
+      "description": "Finar is a cross-platform Jellyfin client built with Flutter. It includes native playback with media_kit, offline support with Hive, and an adaptive interface for desktop, mobile, and TV.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     },
     {
       "packageName": "klit",
       "name": "Klit",
       "summary": "E926 API client",
       "icon": "https://openlyst.ink/icons/Klit/icon.png",
-      "description": "The successor to BaoBao. A modern, privacy-focused client for the e621 community. Built with user experience and data protection as top priorities.",
+      "description": "Klit is the successor to BaoBao, built for the e621 community with privacy-focused defaults and a fast browsing workflow.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     },
     {
       "packageName": "opentorrent",
       "name": "Opentorrent",
-      "summary": "qBittorrent client.",
+      "summary": "qBittorrent client",
       "icon": "https://gitlab.com/Openlyst/opentorrent/-/raw/main/assets/icons/app_icon.png?ref_type=heads",
-      "description": "Manage your torrents with Opentorrent, a cross-platform qBittorrent client that brings seamless torrenting to iOS, macOS, Windows, Linux, Android, and the Web.",
+      "description": "Opentorrent is a cross-platform qBittorrent client for iOS, macOS, Windows, Linux, Android, and web.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     },
     {
       "packageName": "repstore",
       "name": "RepStore",
       "summary": "Alternative App Store for Android",
       "icon": "https://gitlab.com/Openlyst/repstore/-/raw/main/icon.png?ref_type=heads",
-      "description": "Alternative app store for iOS*/Android based on repositories compatible with AltStore repos. Browse and install APKs from repositories with a clean, modern interface.",
+      "description": "RepStore is an alternative app store for iOS*/Android built around AltStore-compatible repositories. Browse repositories and install APKs in one place.",
       "license": "Unknown",
       "categories": [
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1768760909747,
-      "lastUpdated": 1768760909747
+      "added": 1771287490585,
+      "lastUpdated": 1771287490585
     }
   ],
   "packages": {
     "docan": [
       {
-        "added": 1768760905307,
+        "added": 1771287487922,
         "apkName": "docan-3.0.0.apk",
         "hash": "",
         "hashType": "sha256",
         "minSdkVersion": 21,
         "packageName": "docan",
-        "size": 59622757,
+        "size": 59819549,
         "targetSdkVersion": 34,
         "versionCode": 1,
         "versionName": "3.0.0"
@@ -114,45 +114,57 @@
     ],
     "doudou": [
       {
-        "added": 1768760905787,
+        "added": 1771287488246,
+        "apkName": "doudou-14.0.0.apk",
+        "hash": "",
+        "hashType": "sha256",
+        "minSdkVersion": 21,
+        "packageName": "doudou",
+        "size": 87948822,
+        "targetSdkVersion": 34,
+        "versionCode": 1,
+        "versionName": "14.0.0"
+      },
+      {
+        "added": 1771287488516,
+        "apkName": "doudou-13.0.0.apk",
+        "hash": "",
+        "hashType": "sha256",
+        "minSdkVersion": 21,
+        "packageName": "doudou",
+        "size": 86726178,
+        "targetSdkVersion": 34,
+        "versionCode": 1,
+        "versionName": "13.0.0"
+      },
+      {
+        "added": 1771287488856,
         "apkName": "doudou-12.0.1.apk",
         "hash": "",
         "hashType": "sha256",
         "minSdkVersion": 21,
         "packageName": "doudou",
-        "size": 85790750,
+        "size": 85852190,
         "targetSdkVersion": 34,
         "versionCode": 1,
         "versionName": "12.0.1"
-      },
-      {
-        "added": 1768760906199,
-        "apkName": "doudou-12.0.0.apk",
-        "hash": "",
-        "hashType": "sha256",
-        "minSdkVersion": 21,
-        "packageName": "doudou",
-        "size": 85790750,
-        "targetSdkVersion": 34,
-        "versionCode": 1,
-        "versionName": "12.0.0"
-      },
-      {
-        "added": 1768760906617,
-        "apkName": "doudou-11.0.0.apk",
-        "hash": "",
-        "hashType": "sha256",
-        "minSdkVersion": 21,
-        "packageName": "doudou",
-        "size": 88655098,
-        "targetSdkVersion": 34,
-        "versionCode": 1,
-        "versionName": "11.0.0"
       }
     ],
     "finar": [
       {
-        "added": 1768760907217,
+        "added": 1771287489155,
+        "apkName": "finar-2.0.0.apk",
+        "hash": "",
+        "hashType": "sha256",
+        "minSdkVersion": 21,
+        "packageName": "finar",
+        "size": 100213080,
+        "targetSdkVersion": 34,
+        "versionCode": 1,
+        "versionName": "2.0.0"
+      },
+      {
+        "added": 1771287489402,
         "apkName": "finar-1.1.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -166,51 +178,27 @@
     ],
     "klit": [
       {
-        "added": 1768760907817,
+        "added": 1771287489699,
         "apkName": "klit-7.0.0.apk",
         "hash": "",
         "hashType": "sha256",
         "minSdkVersion": 21,
         "packageName": "klit",
-        "size": 100169484,
+        "size": 100165388,
         "targetSdkVersion": 34,
         "versionCode": 1,
         "versionName": "7.0.0"
-      },
-      {
-        "added": 1768760908121,
-        "apkName": "klit-6.0.0.apk",
-        "hash": "",
-        "hashType": "sha256",
-        "minSdkVersion": 21,
-        "packageName": "klit",
-        "size": 99972144,
-        "targetSdkVersion": 34,
-        "versionCode": 1,
-        "versionName": "6.0.0"
-      },
-      {
-        "added": 1768760908562,
-        "apkName": "klit-5.0.0.apk",
-        "hash": "",
-        "hashType": "sha256",
-        "minSdkVersion": 21,
-        "packageName": "klit",
-        "size": 99578476,
-        "targetSdkVersion": 34,
-        "versionCode": 1,
-        "versionName": "5.0.0"
       }
     ],
     "opentorrent": [
       {
-        "added": 1768760909026,
+        "added": 1771287490011,
         "apkName": "opentorrent-1.0.0.apk",
         "hash": "",
         "hashType": "sha256",
         "minSdkVersion": 21,
         "packageName": "opentorrent",
-        "size": 57242403,
+        "size": 57238307,
         "targetSdkVersion": 34,
         "versionCode": 1,
         "versionName": "1.0.0"
@@ -218,7 +206,7 @@
     ],
     "repstore": [
       {
-        "added": 1768760909349,
+        "added": 1771287490313,
         "apkName": "repstore-3.1.0.apk",
         "hash": "",
         "hashType": "sha256",

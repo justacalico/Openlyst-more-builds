@@ -1,9 +1,9 @@
 class Opentorrent < Formula
-  desc "qBittorrent client."
+  desc "qBittorrent client"
   homepage "https://openlyst.ink"
-  url "https://github.com/justacalico/openlyst-more-builds/releases/download/build-52/opentorrent-1.0.0-2026-01-14-linux-x64.zip"
+  url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/opentorrent-1.0.0-2026-02-08-linux-x64.zip"
   version "1.0.0"
-  sha256 "94d8e68e2d65aa27d792c18acbcdb9d9362dc8c9d0a12e1991e023857cc86659"
+  sha256 "c114b1713e30292221787f285b9e9082a5a79ecd6d1a6f71f9474fdc1d8d19ae"
 
   def install
     # Generic installation
