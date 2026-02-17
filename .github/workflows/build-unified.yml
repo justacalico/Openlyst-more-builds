@@ -13,6 +13,7 @@ on:
           - altstore
           - fdroid
           - homebrew
+          - aur
       platform:
         description: 'Homebrew platform (only for homebrew target)'
         required: false
@@ -69,6 +70,58 @@ jobs:
           fi
           
           python build.py $ARGS
+      
+      - name: Generate .SRCINFO for AUR packages
+        if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
+        run: |
+          for pkg in finar-bin klit-bin doudou-bin docan-bin; do
+            if [ -d "aur-packages/$pkg" ]; then
+              docker run --rm \
+                -v "$PWD/aur-packages/$pkg:/pkg:rw" \
+                archlinux:latest \
+                bash -c "pacman -Syu --noconfirm base-devel 2>/dev/null; cd /pkg && makepkg --printsrcinfo > .SRCINFO"
+            fi
+          done
+      
+      - name: Setup SSH for AUR
+        if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/aur_key
+          chmod 600 ~/.ssh/aur_key
+          ssh-keyscan -t ed25519,rsa aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null || true
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.AUR_SSH_KEY_PASSWORD }}" | ssh-add ~/.ssh/aur_key 2>/dev/null || true
+          ssh-add -l | grep -q . || ssh-add ~/.ssh/aur_key 2>/dev/null || true
+      
+      - name: Push to AUR
+        if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
+        env:
+          AUR_SSH_KEY_PASSWORD: ${{ secrets.AUR_SSH_KEY_PASSWORD }}
+        run: |
+          mkdir -p aur-push
+          for pkg in finar-bin klit-bin doudou-bin docan-bin; do
+            if [ ! -d "aur-packages/$pkg" ]; then continue; fi
+            echo "Updating AUR package: $pkg"
+            git clone --depth 1 "ssh://aur@aur.archlinux.org/${pkg}.git" "aur-push/$pkg" 2>/dev/null || true
+            if [ ! -d "aur-push/$pkg/.git" ]; then
+              echo "Clone failed for $pkg (check AUR SSH key has push access)"
+              continue
+            fi
+            cp -f "aur-packages/$pkg/PKGBUILD" "aur-packages/$pkg/.SRCINFO" "aur-push/$pkg/" 2>/dev/null || true
+            cd "aur-push/$pkg"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add PKGBUILD .SRCINFO
+            if ! git diff --staged --quiet; then
+              git commit -m "Update to latest from Openlyst API"
+              git push origin master
+            else
+              echo "No changes for $pkg"
+            fi
+            cd ../..
+          done
+          rm -rf aur-push
       
       - name: Display build output
         run: |

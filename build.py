@@ -6,6 +6,7 @@ This script fetches apps from the OpenLyst API and generates repositories for:
 - AltStore (iOS)
 - F-Droid (Android)
 - Homebrew Tap (macOS/Linux)
+- AUR (Arch User Repository) -bin packages
 
 Usage:
     python build.py --target all                    # Build all targets
@@ -847,6 +848,164 @@ end
 
 
 # =============================================================================
+# AUR (Arch User Repository) Builder
+# =============================================================================
+
+# Map AUR pkgname -> (Openlyst slug, app_name for package(), bundle_subdir or None)
+AUR_PACKAGES = {
+    'finar-bin': ('finar', 'finar', 'bundle', 'data/finar.png'),
+    'klit-bin': ('klit', 'klit', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
+    'doudou-bin': ('doudou', 'doudou', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
+    'docan-bin': ('docan', 'docan', None, 'data/flutter_assets/assets/icons/icon.png'),
+}
+
+
+def get_linux_zip_url(version: Dict) -> Optional[str]:
+    """Extract Linux zip x86_64 URL from Openlyst API version data."""
+    if not isinstance(version, dict):
+        return None
+    downloads = version.get('downloads', {})
+    linux_dl = downloads.get('Linux', {}) if isinstance(downloads, dict) else {}
+    if isinstance(linux_dl, dict) and 'zip' in linux_dl:
+        zip_dl = linux_dl['zip']
+        if isinstance(zip_dl, dict) and zip_dl.get('x86_64'):
+            return zip_dl['x86_64'].strip()
+        if isinstance(zip_dl, str) and zip_dl.startswith('http'):
+            return zip_dl.strip()
+    return None
+
+
+class AURBuilder:
+    """Generate PKGBUILD files for AUR -bin packages from Openlyst API."""
+
+    def __init__(self, client: OpenLystClient, output_dir: str = "aur-packages"):
+        self.client = client
+        self.output_dir = Path(output_dir)
+
+    def _package_script(
+        self,
+        app_name: str,
+        bundle_subdir: Optional[str],
+        icon_path: str,
+        pkgdesc: str,
+        categories: str,
+        keywords: str,
+    ) -> str:
+        """Generate package() function body."""
+        cd_dir = f'${{srcdir}}/{bundle_subdir}' if bundle_subdir else '${srcdir}'
+        install_dir = f'/opt/{app_name}'
+        icon_install = f'    if [ -f "{icon_path}" ]; then\n        install -Dm644 "{icon_path}" "${{pkgdir}}/usr/share/icons/hicolor/256x256/apps/{app_name}.png"\n    fi'
+        return f'''package() {{
+    cd "{cd_dir}"
+
+    install -d "${{pkgdir}}{install_dir}"
+    install -Dm755 "{app_name}" "${{pkgdir}}{install_dir}/{app_name}"
+    install -d "${{pkgdir}}{install_dir}/lib"
+    install -Dm644 lib/*.so "${{pkgdir}}{install_dir}/lib/"
+    cp -r data "${{pkgdir}}{install_dir}/"
+    install -Dm644 /dev/stdin "${{pkgdir}}/usr/share/applications/{app_name}.desktop" <<EOF
+[Desktop Entry]
+Name={app_name.title()}
+Comment={pkgdesc[:60]}
+Exec={install_dir}/{app_name}
+Icon={app_name}
+Type=Application
+Categories={categories};
+Keywords={keywords};
+EOF
+{icon_install}
+    install -d "${{pkgdir}}/usr/bin"
+    ln -s {install_dir}/{app_name} "${{pkgdir}}/usr/bin/{app_name}"
+}}
+'''
+
+    def build_pkgbuild(self, pkgname: str, slug: str, app: Dict, version: Dict) -> Optional[str]:
+        """Build PKGBUILD content for one AUR package."""
+        linux_url = get_linux_zip_url(version)
+        if not linux_url:
+            logger.warning(f"No Linux zip URL for {slug}, skipping AUR {pkgname}")
+            return None
+        pkgver = version.get('version', '1.0.0')
+        pkgrel = 1
+        _, app_name, bundle_subdir, icon_path = AUR_PACKAGES[pkgname]
+        pkgdesc = (app.get('subtitle') or app.get('name', '')).replace('"', "'")[:80]
+        url = app.get('sourceCode') or app.get('website') or 'https://openlyst.ink'
+        license_val = 'GPL3'
+        if 'AGPL' in (app.get('license') or '').upper():
+            license_val = 'AGPL3'
+        depends = ['gtk3']
+        if 'mpv' in (pkgdesc + app.get('localizedDescription', '')).lower():
+            depends.extend(['mpv', 'libmpv.so'])
+        depends_str = " ".join(f"'{d}'" for d in depends)
+        # Categories/keywords from existing AUR PKGBUILDs
+        cat_map = {
+            'finar': 'AudioVideo;Video;Player',
+            'klit': 'Network;Graphics',
+            'doudou': 'Audio;Music;Player',
+            'docan': 'Network;Chat;Utility',
+        }
+        kw_map = {
+            'finar': 'jellyfin;media;video;streaming;',
+            'klit': 'e621;booru;privacy;',
+            'doudou': 'music;streaming;audio;player;',
+            'docan': 'ai;chat;assistant;llm;',
+        }
+        categories = cat_map.get(slug, 'Utility')
+        keywords = kw_map.get(slug, '')
+        package_body = self._package_script(
+            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
+        )
+        content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
+# Version and download URL from Openlyst API: https://openlyst.ink/docs/api
+pkgname={pkgname}
+pkgver={pkgver}
+pkgrel={pkgrel}
+pkgdesc="{pkgdesc}"
+arch=('x86_64')
+url="{url}"
+license=('{license_val}')
+depends=({depends_str})
+optdepends=()
+provides=('{app_name}')
+conflicts=('{app_name}')
+options=('!strip')
+source=("{pkgname}-${{pkgver}}.zip::{linux_url}")
+sha256sums=('SKIP')
+
+{package_body}
+'''
+        return content
+
+    def build(self, output_dir: Optional[str] = None) -> bool:
+        """Generate PKGBUILD for each AUR package."""
+        out = self.output_dir if output_dir is None else Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        success = 0
+        for pkgname, (slug, _, _, _) in AUR_PACKAGES.items():
+            app = self.client.get_app_details(slug)
+            if not app:
+                logger.warning(f"Could not fetch app {slug} for AUR {pkgname}")
+                continue
+            versions = self.client.get_app_versions(slug)
+            if not versions:
+                logger.warning(f"No versions for {slug}")
+                continue
+            latest = versions[0]
+            content = self.build_pkgbuild(pkgname, slug, app, latest)
+            if content:
+                pkg_dir = out / pkgname
+                pkg_dir.mkdir(parents=True, exist_ok=True)
+                (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
+                logger.info(f"Wrote AUR PKGBUILD: {pkg_dir / 'PKGBUILD'}")
+                success += 1
+        if success == 0:
+            logger.error("No AUR PKGBUILDs generated")
+            return False
+        logger.info(f"AUR: generated {success} PKGBUILDs in {out}")
+        return True
+
+
+# =============================================================================
 # Main Entry Point
 # =============================================================================
 
@@ -861,6 +1020,7 @@ Examples:
     python build.py --target fdroid                 # Build F-Droid repo only
     python build.py --target homebrew               # Build Homebrew tap (both platforms)
     python build.py --target homebrew --platform macOS    # Build Homebrew for macOS only
+    python build.py --target aur                         # Build AUR PKGBUILDs only
     python build.py --target altstore,fdroid        # Build multiple targets
         """
     )
@@ -869,7 +1029,7 @@ Examples:
         '--target',
         type=str,
         default='all',
-        help='Build target(s): all, altstore, fdroid, homebrew, or comma-separated list'
+        help='Build target(s): all, altstore, fdroid, homebrew, aur, or comma-separated list'
     )
     parser.add_argument(
         '--platform',
@@ -895,6 +1055,12 @@ Examples:
         type=str,
         default='homebrew-tap',
         help='Output directory for Homebrew tap (default: homebrew-tap)'
+    )
+    parser.add_argument(
+        '--aur-output',
+        type=str,
+        default='aur-packages',
+        help='Output directory for AUR PKGBUILDs (default: aur-packages)'
     )
     parser.add_argument(
         '--repo-url',
@@ -926,7 +1092,7 @@ Examples:
     # Parse targets
     targets: Set[str] = set()
     if args.target.lower() == 'all':
-        targets = {'altstore', 'fdroid', 'homebrew'}
+        targets = {'altstore', 'fdroid', 'homebrew', 'aur'}
     else:
         targets = {t.strip().lower() for t in args.target.split(',')}
     
@@ -980,6 +1146,14 @@ Examples:
             ))
         
         results['homebrew'] = any(homebrew_results)
+    
+    # Build AUR PKGBUILDs (for push to AUR via workflow)
+    if 'aur' in targets:
+        logger.info("=" * 60)
+        logger.info("Building AUR PKGBUILDs")
+        logger.info("=" * 60)
+        builder = AURBuilder(client, output_dir=args.aur_output)
+        results['aur'] = builder.build(output_dir=args.aur_output)
     
     # Summary
     logger.info("=" * 60)

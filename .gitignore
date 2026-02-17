@@ -41,6 +41,10 @@ htmlcov/
 # Build artifacts
 # Note: repo/ directory is tracked for GitHub Pages serving
 
+# AUR (generated PKGBUILDs and push clone dir)
+aur-packages/
+aur-push/
+
 # Temporary files
 *.tmp
 *.bak

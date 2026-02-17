@@ -6,7 +6,7 @@ https://openlyst.ink
 
 ## Unified Build Script
 
-All repositories are generated using a single unified build script (`build.py`) that supports AltStore (iOS), F-Droid (Android), and Homebrew (macOS/Linux).
+All repositories are generated using a single unified build script (`build.py`) that supports AltStore (iOS), F-Droid (Android), Homebrew (macOS/Linux), and AUR (Arch Linux).
 
 ### Usage
 
@@ -18,6 +18,7 @@ python build.py --target all
 python build.py --target altstore          # AltStore only
 python build.py --target fdroid            # F-Droid only
 python build.py --target homebrew          # Homebrew only
+python build.py --target aur               # AUR PKGBUILDs only (for Arch Linux)
 python build.py --target altstore,fdroid   # Multiple targets
 
 # Homebrew platform options
@@ -83,6 +84,26 @@ brew install --cask justacalico/openlyst-more-builds/app-name
 | `brew install justacalico/openlyst-more-builds/app-name` | Install an application |
 | `brew uninstall app-name` | Uninstall an application |
 | `brew info justacalico/openlyst-more-builds/app-name` | Get formula info |
+
+---
+
+## AUR (Arch Linux)
+
+The "Build All Repositories" workflow can update these AUR packages from the [Openlyst API](https://openlyst.ink/docs/api):
+
+- [finar-bin](https://aur.archlinux.org/packages/finar-bin)
+- [klit-bin](https://aur.archlinux.org/packages/klit-bin)
+- [doudou-bin](https://aur.archlinux.org/packages/doudou-bin)
+- [docan-bin](https://aur.archlinux.org/packages/docan-bin)
+
+To enable AUR pushes, add these GitHub repository secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `AUR_SSH_KEY_BASE64` | Base64-encoded private key (e.g. `cat ~/.ssh/id_ed25519 \| base64 -w0`) that has push access to the AUR packages above |
+| `AUR_SSH_KEY_PASSWORD` | Passphrase for the key (leave empty if the key has no passphrase) |
+
+Run the workflow with target **aur** or **all** to update AUR packages to the latest version from the Openlyst API.
 
 ---
 
