@@ -85,28 +85,60 @@ jobs:
       
       - name: Setup SSH for AUR
         if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
+        env:
+          AUR_SSH_KEY_BASE64: ${{ secrets.AUR_SSH_KEY_BASE64 }}
         run: |
+          set -e
           mkdir -p ~/.ssh
-          echo "${{ secrets.AUR_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/aur_key
+          chmod 700 ~/.ssh
+          # Decode key without adding newlines (printf avoids echo mangling multiline/trailing newline)
+          printf '%s' "$AUR_SSH_KEY_BASE64" | base64 -d > ~/.ssh/aur_key
           chmod 600 ~/.ssh/aur_key
+          # Debug: key file sanity (no secret content)
+          echo "::notice::AUR SSH key file size: $(wc -c < ~/.ssh/aur_key) bytes"
+          if head -1 ~/.ssh/aur_key | grep -q 'BEGIN.*PRIVATE KEY'; then
+            echo "::notice::AUR SSH key format: $(head -1 ~/.ssh/aur_key)"
+            ssh-keygen -l -f ~/.ssh/aur_key 2>/dev/null || echo "::warning::Could not read key fingerprint (passphrase-protected or invalid key)"
+          else
+            echo "::error::AUR key file does not look like a PEM private key (check AUR_SSH_KEY_BASE64 is base64 of the private key)"
+            exit 1
+          fi
           ssh-keyscan -t ed25519,rsa aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null || true
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.AUR_SSH_KEY_PASSWORD }}" | ssh-add ~/.ssh/aur_key 2>/dev/null || true
-          ssh-add -l | grep -q . || ssh-add ~/.ssh/aur_key 2>/dev/null || true
+          echo "::notice::Added aur.archlinux.org to known_hosts"
       
       - name: Push to AUR
         if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
         env:
           AUR_SSH_KEY_PASSWORD: ${{ secrets.AUR_SSH_KEY_PASSWORD }}
-          GIT_SSH_COMMAND: "ssh -i ~/.ssh/aur_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts"
         run: |
+          set -e
+          # Start agent in this step so it stays alive for the whole run (previous step's agent is gone)
+          eval "$(ssh-agent -s)"
+          echo "::notice::SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+          # Load key into agent (passphrase via stdin so encrypted keys work in CI)
+          if printf '%s' "$AUR_SSH_KEY_PASSWORD" | ssh-add ~/.ssh/aur_key 2>/tmp/ssh-add.log; then
+            echo "::notice::AUR SSH key loaded into agent"
+          else
+            echo "::warning::ssh-add failed (check passphrase if key is encrypted):"
+            cat /tmp/ssh-add.log || true
+          fi
+          ssh-add -l
+          if ! ssh-add -l | grep -q .; then
+            echo "::error::No keys in agent. If key is passphrase-protected, set AUR_SSH_KEY_PASSWORD. If key is unencrypted, check AUR_SSH_KEY_BASE64."
+            exit 1
+          fi
+          # Use agent only (no -i) so the decrypted key from ssh-add is used; -i would re-read the file and prompt for passphrase
+          export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts"
+          # Optional: quick auth test (no secret output)
+          echo "::notice::Testing SSH to aur.archlinux.org..."
+          $GIT_SSH_COMMAND -T -o BatchMode=yes -o ConnectTimeout=10 aur@aur.archlinux.org 2>&1 | head -5 || true
           mkdir -p aur-push
           for pkg in aur-packages/*/; do
             pkg=$(basename "$pkg")
             if [ ! -f "aur-packages/$pkg/PKGBUILD" ]; then continue; fi
             echo "Updating AUR package: $pkg"
             if ! git clone --depth 1 "ssh://aur@aur.archlinux.org/${pkg}.git" "aur-push/$pkg" 2>&1; then
-              echo "Clone failed for $pkg (ensure AUR_SSH_KEY_BASE64 is the private key and this AUR user has push access to $pkg)"
+              echo "::warning::Clone failed for $pkg (ensure this AUR user has push access to $pkg)"
               continue
             fi
             cp -f "aur-packages/$pkg/PKGBUILD" "aur-packages/$pkg/.SRCINFO" "aur-push/$pkg/" 2>/dev/null || true
