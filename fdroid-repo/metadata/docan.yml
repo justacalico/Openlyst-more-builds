@@ -8,10 +8,10 @@ SourceCode:
 IssueTracker: 
 
 AutoName: Docan
-Summary: Universal AI chat application with Liquid Glass design
+Summary: AI chat app with Liquid Glass UI
 
 Description: |
-    Docan is a universal AI chat application featuring a stunning Liquid Glass design. Connect with various AI providers and enjoy a seamless chat experience across all your devices.
+    Docan is a cross-platform AI chat app. Connect multiple providers and keep conversations in one interface across desktop, mobile, and web.
 
 RepoType: git
 Repo: 

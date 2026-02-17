@@ -1,9 +1,9 @@
 class Klit < Formula
   desc "E926 API client"
   homepage "https://openlyst.ink"
-  url "https://github.com/justacalico/openlyst-more-builds/releases/download/build-60/klit-7.0.0-2026-01-18-macos-unsigned.zip"
+  url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/klit-7.0.0-2026-02-08-macos-unsigned.zip"
   version "7.0.0"
-  sha256 "3b5a9490d1b41ed2460eb56e3a06f63d3da8de3b801c7676f736cb586b919ed4"
+  sha256 "24109ccccd1ad29f75af7a6a5d4f5fb543adf157c129f9517863644f0b1cfa10"
 
   def install
     # Generic installation

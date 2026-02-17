@@ -1,9 +1,9 @@
 class Finar < Formula
-  desc "Replacement frontend for Jellyfin"
+  desc "Jellyfin frontend client"
   homepage "https://openlyst.ink"
-  url "https://gitlab.com/Openlyst/finar/-/jobs/12639939013/artifacts/raw/artifacts/klit-linux-x86_64.AppImage"
-  version "1.1.0"
-  sha256 "f6e70edc27e77c45a6efe784c67fc3bae31318cf433bda5d31b6c504cd0ebc9f"
+  url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-13/finar-1.1.0-2026-02-13-linux-x86_64.AppImage"
+  version "2.0.0"
+  sha256 "ffbef5da26784bdb982f7f14dd3dde2d873ba4914d69c0fb1aede1ae38fa905d"
 
   def install
     # Generic installation

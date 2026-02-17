@@ -1,9 +1,9 @@
 class Docan < Formula
-  desc "Universal AI chat application with Liquid Glass design"
+  desc "AI chat app with Liquid Glass UI"
   homepage "https://openlyst.ink"
-  url "https://github.com/justacalico/openlyst-more-builds/releases/download/build-47/docan-3.0.0-2026-01-13-macos-unsigned.zip"
+  url "https://github.com/justacalico/Openlyst-more-builds/releases/download/build-1/docan-3.0.0-2026-02-08-macos-unsigned.zip"
   version "3.0.0"
-  sha256 "2f5076154c467c4d34d49ca51d7b07b70c847abfde8044bd69c5532211d864f8"
+  sha256 "2b11075aa2b516ab31d091ce6cbe5b0ea2c6cb41f5d9eb9a1badb93740593ad7"
 
   def install
     # Generic installation
