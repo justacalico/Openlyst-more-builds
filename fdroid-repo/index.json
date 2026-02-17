@@ -4,7 +4,7 @@
     "description": "Free and open source Android applications from OpenLyst",
     "icon": "icon.png",
     "address": "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/fdroid-repo",
-    "timestamp": 1771287799911,
+    "timestamp": 1771288262624,
     "version": 21
   },
   "requests": {
@@ -23,8 +23,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     },
     {
       "packageName": "doudou",
@@ -37,8 +37,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     },
     {
       "packageName": "finar",
@@ -51,8 +51,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     },
     {
       "packageName": "klit",
@@ -65,8 +65,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     },
     {
       "packageName": "opentorrent",
@@ -79,8 +79,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     },
     {
       "packageName": "repstore",
@@ -93,14 +93,14 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771287799911,
-      "lastUpdated": 1771287799911
+      "added": 1771288262624,
+      "lastUpdated": 1771288262624
     }
   ],
   "packages": {
     "docan": [
       {
-        "added": 1771287797109,
+        "added": 1771288261088,
         "apkName": "docan-3.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -114,7 +114,7 @@
     ],
     "doudou": [
       {
-        "added": 1771287797436,
+        "added": 1771288261266,
         "apkName": "doudou-14.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -126,7 +126,7 @@
         "versionName": "14.0.0"
       },
       {
-        "added": 1771287797736,
+        "added": 1771288261430,
         "apkName": "doudou-13.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -138,7 +138,7 @@
         "versionName": "13.0.0"
       },
       {
-        "added": 1771287798047,
+        "added": 1771288261584,
         "apkName": "doudou-12.0.1.apk",
         "hash": "",
         "hashType": "sha256",
@@ -152,7 +152,7 @@
     ],
     "finar": [
       {
-        "added": 1771287798360,
+        "added": 1771288261761,
         "apkName": "finar-2.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -164,7 +164,7 @@
         "versionName": "2.0.0"
       },
       {
-        "added": 1771287798657,
+        "added": 1771288261920,
         "apkName": "finar-1.1.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -178,7 +178,7 @@
     ],
     "klit": [
       {
-        "added": 1771287798963,
+        "added": 1771288262086,
         "apkName": "klit-7.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -192,7 +192,7 @@
     ],
     "opentorrent": [
       {
-        "added": 1771287799286,
+        "added": 1771288262286,
         "apkName": "opentorrent-1.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -206,7 +206,7 @@
     ],
     "repstore": [
       {
-        "added": 1771287799600,
+        "added": 1771288262454,
         "apkName": "repstore-3.1.0.apk",
         "hash": "",
         "hashType": "sha256",
