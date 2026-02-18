@@ -4,7 +4,7 @@
     "description": "Free and open source Android applications from OpenLyst",
     "icon": "icon.png",
     "address": "https://raw.githubusercontent.com/justacalico/Openlyst-more-builds/main/fdroid-repo",
-    "timestamp": 1771310900189,
+    "timestamp": 1771386116916,
     "version": 21
   },
   "requests": {
@@ -23,8 +23,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     },
     {
       "packageName": "doudou",
@@ -37,8 +37,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     },
     {
       "packageName": "finar",
@@ -51,8 +51,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     },
     {
       "packageName": "klit",
@@ -65,8 +65,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     },
     {
       "packageName": "opentorrent",
@@ -79,8 +79,8 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     },
     {
       "packageName": "repstore",
@@ -93,14 +93,14 @@
         "System"
       ],
       "webSite": "https://openlyst.ink",
-      "added": 1771310900189,
-      "lastUpdated": 1771310900189
+      "added": 1771386116916,
+      "lastUpdated": 1771386116916
     }
   ],
   "packages": {
     "docan": [
       {
-        "added": 1771310898599,
+        "added": 1771386114329,
         "apkName": "docan-3.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -114,7 +114,7 @@
     ],
     "doudou": [
       {
-        "added": 1771310898761,
+        "added": 1771386114562,
         "apkName": "doudou-14.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -126,7 +126,7 @@
         "versionName": "14.0.0"
       },
       {
-        "added": 1771310898908,
+        "added": 1771386114822,
         "apkName": "doudou-13.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -138,7 +138,7 @@
         "versionName": "13.0.0"
       },
       {
-        "added": 1771310899076,
+        "added": 1771386115055,
         "apkName": "doudou-12.0.1.apk",
         "hash": "",
         "hashType": "sha256",
@@ -152,7 +152,7 @@
     ],
     "finar": [
       {
-        "added": 1771310899236,
+        "added": 1771386115296,
         "apkName": "finar-2.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -164,7 +164,7 @@
         "versionName": "2.0.0"
       },
       {
-        "added": 1771310899400,
+        "added": 1771386115542,
         "apkName": "finar-1.1.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -178,7 +178,7 @@
     ],
     "klit": [
       {
-        "added": 1771310899544,
+        "added": 1771386115884,
         "apkName": "klit-7.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -192,7 +192,7 @@
     ],
     "opentorrent": [
       {
-        "added": 1771310899711,
+        "added": 1771386116114,
         "apkName": "opentorrent-2.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -204,7 +204,7 @@
         "versionName": "2.0.0"
       },
       {
-        "added": 1771310899854,
+        "added": 1771386116306,
         "apkName": "opentorrent-1.0.0.apk",
         "hash": "",
         "hashType": "sha256",
@@ -218,7 +218,7 @@
     ],
     "repstore": [
       {
-        "added": 1771310900011,
+        "added": 1771386116649,
         "apkName": "repstore-3.1.0.apk",
         "hash": "",
         "hashType": "sha256",
