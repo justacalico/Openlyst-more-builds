@@ -9,10 +9,10 @@ on:
         type: boolean
         default: false
       doudou_platforms:
-        description: 'Doudou platforms (comma-separated: ios,android,windows,linux,macos,web)'
+        description: 'Doudou platforms (comma-separated: ios,android,windows,linux,macos)'
         required: false
         type: string
-        default: 'ios,android,windows,linux,macos,web'
+        default: 'ios,android,windows,linux,macos'
       doudou_commit_hash:
         description: 'Doudou commit hash (leave empty for latest)'
         required: false
@@ -2928,83 +2928,6 @@ jobs:
   # WEB BUILDS
   # ============================================================================
 
-  # WEB - DOUDOU
-  build-web-doudou:
-    if: ${{ github.event.inputs.build_doudou == 'true' && contains(github.event.inputs.doudou_platforms, 'web') }}
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      build_date: ${{ steps.version.outputs.build_date }}
-      duration: ${{ steps.duration.outputs.duration }}
-      status: ${{ steps.status.outputs.status }}
-    steps:
-      - name: Record start time
-        id: start
-        run: echo "start_time=$(date -Iseconds)" >> $GITHUB_OUTPUT
-
-      - name: Clone GitLab Repo
-        run: git clone https://gitlab.com/Openlyst/doudou.git .
-
-      - name: Checkout specific commit
-        if: ${{ github.event.inputs.doudou_commit_hash != '' }}
-        run: git checkout ${{ github.event.inputs.doudou_commit_hash }}
-
-      - name: Fix RepeatMode conflict with Flutter
-        run: |
-          # Only replace standalone RepeatMode (not AudioServiceRepeatMode) using word boundaries
-          AUDIO_HANDLER="lib/services/audio/unified_audio_handler.dart"
-          if [ -f "$AUDIO_HANDLER" ]; then
-            perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$AUDIO_HANDLER"
-            find lib -name "*.dart" -exec grep -l "unified_audio_handler" {} \; | while read f; do
-              [ "$f" = "$AUDIO_HANDLER" ] || ! grep -q '\bRepeatMode\b' "$f" || perl -i -pe 's/\bRepeatMode\b/AudioRepeatMode/g' "$f"
-            done
-          fi
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Get version from pubspec
-        id: version
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d'+' -f1)
-          BUILD_DATE=$(date +%Y-%m-%d)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
-
-      - name: Build Web
-        run: |
-          flutter pub get
-          flutter build web --release --build-name=${{ steps.version.outputs.version }}
-
-      - name: Create ZIP
-        run: |
-          cd build
-          zip -r $GITHUB_WORKSPACE/doudou-${{ steps.version.outputs.version }}-${{ steps.version.outputs.build_date }}-web.zip web/
-
-      - name: Record duration and status
-        id: duration
-        if: always()
-        run: |
-          start_time="${{ steps.start.outputs.start_time }}"
-          start_seconds=$(date -d "$start_time" +%s)
-          end_seconds=$(date +%s)
-          duration=$(echo "scale=1; ($end_seconds - $start_seconds) / 60" | bc)
-          echo "duration=$duration" >> $GITHUB_OUTPUT
-
-      - name: Set status
-        id: status
-        if: always()
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
-
-      - name: Upload Web Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: doudou-web
-          path: doudou-*-web.zip
-
   # WEB - DOCAN
   build-web-docan:
     if: ${{ github.event.inputs.build_docan == 'true' && contains(github.event.inputs.docan_platforms, 'web') }}
@@ -3383,7 +3306,6 @@ jobs:
       - build-linux-finar
       - build-linux-klit
       - build-linux-opentorrent
-      - build-web-doudou
       - build-web-docan
       - build-web-finar
       - build-web-klit
@@ -3587,7 +3509,6 @@ jobs:
             echo "- iOS: ${{ needs.build-ios-doudou.outputs.status || 'skipped' }} ${{ needs.build-ios-doudou.outputs.duration && format('({0} min)', needs.build-ios-doudou.outputs.duration) || '' }} (unsigned)" >> release_notes.md
             echo "- Android: ${{ needs.build-android-doudou.outputs.status || 'skipped' }} ${{ needs.build-android-doudou.outputs.duration && format('({0} min)', needs.build-android-doudou.outputs.duration) || '' }} - Signing: ${{ needs.build-android-doudou.outputs.signing || 'N/A' }}" >> release_notes.md
             echo "- Linux: ${{ needs.build-linux-doudou.outputs.status || 'skipped' }} ${{ needs.build-linux-doudou.outputs.duration && format('({0} min)', needs.build-linux-doudou.outputs.duration) || '' }}" >> release_notes.md
-            echo "- Web: ${{ needs.build-web-doudou.outputs.status || 'skipped' }} ${{ needs.build-web-doudou.outputs.duration && format('({0} min)', needs.build-web-doudou.outputs.duration) || '' }}" >> release_notes.md
             echo "" >> release_notes.md
           fi
 
@@ -3686,7 +3607,6 @@ jobs:
           if [ "${{ needs.build-linux-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Linux"; fi
           if [ "${{ needs.build-linux-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Linux"; fi
           if [ "${{ needs.build-linux-opentorrent.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS OpenTorrent-Linux"; fi
-          if [ "${{ needs.build-web-doudou.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Doudou-Web"; fi
           if [ "${{ needs.build-web-docan.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Docan-Web"; fi
           if [ "${{ needs.build-web-finar.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Finar-Web"; fi
           if [ "${{ needs.build-web-klit.outputs.status }}" == "failure" ]; then FAILED_BUILDS="$FAILED_BUILDS Klit-Web"; fi
