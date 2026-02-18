@@ -859,6 +859,46 @@ AUR_PACKAGES = {
     'docan-bin': ('docan', 'docan', None, 'data/flutter_assets/assets/icons/icon.png'),
 }
 
+# GitHub repo for build workflow releases (unstable AUR packages use these download URLs)
+GITHUB_RELEASES_API = "https://api.github.com/repos/justacalico/Openlyst-more-builds/releases"
+
+
+def get_latest_linux_zip_from_github(slug: str, session: Optional[requests.Session] = None) -> Optional[tuple]:
+    """Fetch latest Linux zip URL and version from this repo's GitHub releases.
+    Returns (download_url, pkgver) or None. Uses first release that has an asset
+    matching {slug}-*-linux*.zip.
+    """
+    session = session or requests.Session()
+    session.headers.setdefault("User-Agent", "Openlyst-Unified-Builder/1.0")
+    try:
+        r = session.get(GITHUB_RELEASES_API, params={"per_page": 30}, timeout=15)
+        r.raise_for_status()
+        releases = r.json()
+    except Exception as e:
+        logger.warning(f"Failed to fetch GitHub releases for unstable AUR: {e}")
+        return None
+    if not isinstance(releases, list):
+        return None
+    prefix = f"{slug}-"
+    suffix_zip = "-linux-x64.zip"
+    for release in releases:
+        tag = release.get("tag_name") or ""
+        assets = release.get("assets") or []
+        for asset in assets:
+            name = asset.get("name") or ""
+            if name.startswith(prefix) and (name.endswith(suffix_zip) or "-linux" in name and name.endswith(".zip")):
+                url = asset.get("browser_download_url")
+                if not url:
+                    continue
+                # pkgver from filename e.g. opentorrent-2.0.0-2026-02-17-linux-x64.zip -> 2.0.0
+                parts = name.replace(".zip", "").split("-")
+                if len(parts) >= 2:
+                    pkgver = parts[1]
+                else:
+                    pkgver = "1.0.0"
+                return (url, pkgver)
+    return None
+
 
 def get_linux_zip_url(version: Dict) -> Optional[str]:
     """Extract Linux zip x86_64 URL from Openlyst API version data."""
@@ -992,6 +1032,80 @@ sha256sums=('SKIP')
 '''
         return content
 
+    def _aur_metadata_for_slug(self, slug: str) -> tuple:
+        """Return (app_name, bundle_subdir, icon_path) for a slug from AUR_PACKAGES or defaults."""
+        for pkgname, (s, app_name, bundle_subdir, icon_path) in AUR_PACKAGES.items():
+            if s == slug:
+                return (app_name, bundle_subdir or 'bundle', icon_path or 'data/flutter_assets/assets/icons/icon.png')
+        return (slug, 'bundle', 'data/flutter_assets/assets/icons/icon.png')
+
+    def build_pkgbuild_from_url(
+        self,
+        pkgname: str,
+        slug: str,
+        app: Dict,
+        linux_url: str,
+        pkgver: str,
+        app_name: Optional[str] = None,
+        bundle_subdir: Optional[str] = None,
+        icon_path: Optional[str] = None,
+    ) -> Optional[str]:
+        """Build PKGBUILD content for unstable AUR package from a direct download URL."""
+        aname, bsubdir, ipath = self._aur_metadata_for_slug(slug)
+        app_name = app_name or aname
+        bundle_subdir = bundle_subdir if bundle_subdir is not None else bsubdir
+        icon_path = icon_path or ipath
+        pkgdesc = (app.get('subtitle') or app.get('name', '')).replace('"', "'")[:80]
+        if pkgdesc and not pkgdesc.endswith('(unstable)'):
+            pkgdesc = f"{pkgdesc} (unstable build from GitHub)"
+        url = app.get('sourceCode') or app.get('website') or 'https://openlyst.ink'
+        license_val = 'GPL3'
+        if 'AGPL' in (app.get('license') or '').upper():
+            license_val = 'AGPL3'
+        depends = ['gtk3']
+        if 'mpv' in (pkgdesc + (app.get('localizedDescription') or '')).lower():
+            depends.extend(['mpv', 'libmpv.so'])
+        depends_str = " ".join(f"'{d}'" for d in depends)
+        cat_map = {
+            'finar': 'AudioVideo;Video;Player',
+            'klit': 'Network;Graphics',
+            'doudou': 'Audio;Music;Player',
+            'docan': 'Network;Chat;Utility',
+            'opentorrent': 'Network;FileTransfer;',
+        }
+        kw_map = {
+            'finar': 'jellyfin;media;video;streaming;',
+            'klit': 'e621;booru;privacy;',
+            'doudou': 'music;streaming;audio;player;',
+            'docan': 'ai;chat;assistant;llm;',
+            'opentorrent': 'torrent;download;',
+        }
+        categories = cat_map.get(slug, 'Utility')
+        keywords = kw_map.get(slug, '')
+        package_body = self._package_script(
+            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
+        )
+        content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
+# Unstable build from GitHub releases: https://github.com/justacalico/Openlyst-more-builds/releases
+pkgname={pkgname}
+pkgver={pkgver}
+pkgrel=1
+pkgdesc="{pkgdesc}"
+arch=('x86_64')
+url="{url}"
+license=('{license_val}')
+depends=({depends_str})
+optdepends=()
+provides=('{app_name}')
+conflicts=('{app_name}')
+options=('!strip')
+source=("{pkgname}-${{pkgver}}.zip::{linux_url}")
+sha256sums=('SKIP')
+
+{package_body}
+'''
+        return content
+
     def build(self, output_dir: Optional[str] = None) -> bool:
         """Generate PKGBUILD for known AUR packages and any new app with a Linux build."""
         out = self.output_dir if output_dir is None else Path(output_dir)
@@ -1020,6 +1134,7 @@ sha256sums=('SKIP')
         # New apps with Linux zip that don't have an AUR package yet (e.g. opentorrent)
         existing_slugs = {t[0] for t in AUR_PACKAGES.values()}
         apps_linux = self.client.get_all_apps(platform="Linux")
+        new_app_slugs: Set[str] = set()
         for app in apps_linux or []:
             slug = app.get('slug')
             if not slug or slug in existing_slugs or slug in built_slugs:
@@ -1037,6 +1152,25 @@ sha256sums=('SKIP')
                 pkg_dir.mkdir(parents=True, exist_ok=True)
                 (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
                 logger.info(f"Wrote AUR PKGBUILD (new app): {pkg_dir / 'PKGBUILD'}")
+                new_app_slugs.add(slug)
+                success += 1
+        # Unstable AUR packages: same apps as stable, download URLs from GitHub releases (build workflow)
+        for slug in built_slugs | new_app_slugs:
+            gh = get_latest_linux_zip_from_github(slug, self.client.session)
+            if not gh:
+                logger.debug(f"No GitHub release Linux zip for {slug}, skipping unstable")
+                continue
+            linux_url, pkgver = gh
+            app = self.client.get_app_details(slug)
+            if not app:
+                continue
+            pkgname_unstable = f"{slug}-unstable"
+            content = self.build_pkgbuild_from_url(pkgname_unstable, slug, app, linux_url, pkgver)
+            if content:
+                pkg_dir = out / pkgname_unstable
+                pkg_dir.mkdir(parents=True, exist_ok=True)
+                (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
+                logger.info(f"Wrote AUR PKGBUILD (unstable): {pkg_dir / 'PKGBUILD'}")
                 success += 1
         if success == 0:
             logger.error("No AUR PKGBUILDs generated")
