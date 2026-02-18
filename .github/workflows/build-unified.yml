@@ -74,6 +74,7 @@ jobs:
       - name: Generate .SRCINFO for AUR packages
         if: github.event.inputs.target == 'all' || contains(github.event.inputs.target || '', 'aur')
         run: |
+          # Includes both stable (-bin) and unstable (-unstable) AUR packages from build.py
           for pkg in aur-packages/*/; do
             pkg=$(basename "$pkg")
             if [ ! -f "aur-packages/$pkg/PKGBUILD" ]; then continue; fi
@@ -133,6 +134,7 @@ jobs:
           echo "::notice::Testing SSH to aur.archlinux.org..."
           $GIT_SSH_COMMAND -T -o BatchMode=yes -o ConnectTimeout=10 aur@aur.archlinux.org 2>&1 | head -5 || true
           mkdir -p aur-push
+          # Push both stable (-bin) and unstable (-unstable) AUR packages
           for pkg in aur-packages/*/; do
             pkg=$(basename "$pkg")
             if [ ! -f "aur-packages/$pkg/PKGBUILD" ]; then continue; fi
@@ -147,7 +149,7 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add PKGBUILD .SRCINFO
             if ! git diff --staged --quiet; then
-              git commit -m "Update to latest from Openlyst API"
+              git commit -m "Update to latest from Openlyst API (stable) or GitHub releases (unstable)"
               git push origin master
             else
               echo "No changes for $pkg"
@@ -182,6 +184,12 @@ jobs:
             ls -lah homebrew-tap/Formula/ 2>/dev/null || echo "Empty"
             echo "Formulae count:"
             find homebrew-tap/Formula -name "*.rb" 2>/dev/null | wc -l || echo "0"
+            echo ""
+          fi
+          
+          if [ -d "aur-packages" ]; then
+            echo "--- AUR packages (stable -bin and unstable -unstable) ---"
+            ls -la aur-packages/ 2>/dev/null || echo "Empty"
           fi
       
       - name: Configure git
