@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenLyst Builds — Releases &amp; Repositories</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0b0a;
+      --bg-elevated: #141210;
+      --bg-card: #1a1816;
+      --border: #2a2622;
+      --text: #e8e4e0;
+      --text-muted: #9a948a;
+      --accent: #dc2626;
+      --accent-soft: rgba(220, 38, 38, 0.15);
+      --accent-glow: rgba(220, 38, 38, 0.25);
+      --success: #22c55e;
+      --warning: #eab308;
+      --radius: 6px;
+      --font-sans: 'Outfit', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      padding: 3rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    .tagline a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .tagline a:hover {
+      text-decoration: underline;
+    }
+
+    /* Section */
+    section {
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(12px);
+      animation: reveal 0.6s ease forwards;
+    }
+
+    section:nth-child(2) { animation-delay: 0.05s; }
+    section:nth-child(3) { animation-delay: 0.1s; }
+    section:nth-child(4) { animation-delay: 0.15s; }
+    section:nth-child(5) { animation-delay: 0.2s; }
+    section:nth-child(6) { animation-delay: 0.25s; }
+    section:nth-child(7) { animation-delay: 0.3s; }
+    section:nth-child(8) { animation-delay: 0.35s; }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(220, 38, 38, 0.35);
+      box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.1);
+    }
+
+    .card:last-child {
+      margin-bottom: 0;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h3 .badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--bg-card);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+      color: #fff;
+      filter: brightness(1.05);
+    }
+
+    .copy-input {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.45rem 0.65rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* App grid (AltStore / F-Droid) */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .app-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .app-tile:hover {
+      border-color: rgba(220, 38, 38, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .app-tile img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: var(--bg-elevated);
+    }
+
+    .app-tile .name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .app-tile .meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Releases list */
+    .releases-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .release-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+    }
+
+    .release-row:hover {
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+
+    .release-row.prerelease {
+      border-left: 3px solid var(--warning);
+    }
+
+    .release-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .release-tag {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .release-name {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .release-date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .release-badges {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .release-badges .badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .release-badges .badge.pre {
+      background: rgba(234, 179, 8, 0.2);
+      color: var(--warning);
+    }
+
+    .loading {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 0.875rem;
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: var(--radius);
+      margin-top: 0.5rem;
+    }
+
+    footer {
+      padding: 2rem 0 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo-row">
+        <span class="logo-dot" aria-hidden="true"></span>
+        <h1>OpenLyst Builds</h1>
+      </div>
+      <p class="tagline">
+        Pre-releases, repositories, and release artifacts for
+        <a href="https://openlyst.ink" target="_blank" rel="noopener">OpenLyst</a> apps — AltStore, F-Droid, Homebrew, AUR, Docker.
+      </p>
+    </header>
+
+    <section id="altstore">
+      <span class="section-label">iOS</span>
+      <h2 class="section-title">AltStore</h2>
+      <div class="card">
+        <h3>Source URL</h3>
+        <p>Add this source in AltStore to install and update OpenLyst iOS apps.</p>
+        <div class="card-actions" style="flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+          <input type="text" class="copy-input" id="altstore-url" value="https://raw.githubusercontent.com/JustACalico/Openlyst-more-builds/main/repo/apps.json" readonly />
+          <button type="button" class="btn btn-primary" onclick="copyUrl('altstore-url')">Copy</button>
+          <a href="https://cdn.jsdelivr.net/gh/JustACalico/Openlyst-more-builds@main/repo/apps.json" class="btn" target="_blank" rel="noopener">CDN</a>
+        </div>
+      </div>
+      <div id="altstore-apps" class="app-grid">
+        <div class="loading">Loading apps…</div>
+      </div>
+    </section>
+
+    <section id="fdroid">
+      <span class="section-label">Android</span>
+      <h2 class="section-title">F-Droid</h2>
+      <div class="card">
+        <h3>Repository URL</h3>
+        <p>Add this repository in the F-Droid client to get OpenLyst Android apps.</p>
+        <div class="card-actions" style="flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+          <input type="text" class="copy-input" id="fdroid-url" value="https://raw.githubusercontent.com/JustACalico/Openlyst-more-builds/main/fdroid-repo" readonly />
+          <button type="button" class="btn btn-primary" onclick="copyUrl('fdroid-url')">Copy</button>
+        </div>
+      </div>
+      <div id="fdroid-apps" class="app-grid">
+        <div class="loading">Loading apps…</div>
+      </div>
+    </section>
+
+    <section id="homebrew">
+      <span class="section-label">macOS / Linux</span>
+      <h2 class="section-title">Homebrew</h2>
+      <div class="card">
+        <h3>Tap &amp; install</h3>
+        <p>Add the tap and install apps via Homebrew.</p>
+        <div class="card-actions" style="flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+          <input type="text" class="copy-input" id="homebrew-tap" value="brew tap justacalico/openlyst-more-builds" readonly />
+          <button type="button" class="btn btn-primary" onclick="copyUrl('homebrew-tap')">Copy</button>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+          Then: <code style="font-family: var(--font-mono); font-size: 0.8rem;">brew install justacalico/openlyst-more-builds/&lt;formula&gt;</code> (e.g. finar, docan, doudou, klit, opentorrent).
+        </p>
+      </div>
+      <div id="homebrew-formulae" class="releases-list">
+        <div class="loading">Loading formulae…</div>
+      </div>
+    </section>
+
+    <section id="aur">
+      <span class="section-label">Arch Linux</span>
+      <h2 class="section-title">AUR</h2>
+      <div class="card">
+        <h3>Packages</h3>
+        <p>Install from the Arch User Repository. Example:</p>
+        <div class="card-actions" style="flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
+          <input type="text" class="copy-input" id="aur-example" value="yay -S finar-bin" readonly style="max-width: 220px;" />
+          <button type="button" class="btn btn-primary" onclick="copyUrl('aur-example')">Copy</button>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+          Available: <span id="aur-packages">finar-bin, klit-bin, doudou-bin, docan-bin, opentorrent-bin</span>
+        </p>
+      </div>
+    </section>
+
+    <section id="docker">
+      <span class="section-label">Containers</span>
+      <h2 class="section-title">Docker</h2>
+      <div class="card">
+        <h3>Finar (Jellyfin client)</h3>
+        <p>Web-based Jellyfin client image on GitHub Container Registry.</p>
+        <div class="card-actions" style="flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+          <input type="text" class="copy-input" id="docker-pull" value="docker pull ghcr.io/justacalico/finar:latest" readonly />
+          <button type="button" class="btn btn-primary" onclick="copyUrl('docker-pull')">Copy</button>
+          <a href="https://github.com/orgs/JustACalico/packages/container/package/finar" class="btn" target="_blank" rel="noopener">View on GHCR</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="releases">
+      <span class="section-label">Artifacts</span>
+      <h2 class="section-title">GitHub Releases</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        All build artifacts (IPAs, APKs, macOS/Linux binaries) are published as GitHub releases. Pre-releases are marked.
+      </p>
+      <div id="releases-list" class="releases-list">
+        <div class="loading">Loading releases…</div>
+      </div>
+      <div class="card-actions" style="margin-top: 1rem;">
+        <a href="https://github.com/JustACalico/Openlyst-more-builds/releases" class="btn btn-primary" target="_blank" rel="noopener">View all on GitHub →</a>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        <a href="https://openlyst.ink" target="_blank" rel="noopener">OpenLyst</a> ·
+        <a href="https://github.com/JustACalico/Openlyst-more-builds" target="_blank" rel="noopener">Repository</a> ·
+        <a href="https://openlyst.ink/docs/api" target="_blank" rel="noopener">API</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const RAW_BASE = 'https://raw.githubusercontent.com/JustACalico/Openlyst-more-builds/main';
+    const API_BASE = 'https://api.github.com/repos/JustACalico/Openlyst-more-builds';
+
+    function copyUrl(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.select();
+      el.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(el.value).then(() => {
+        const btn = el.nextElementSibling;
+        if (btn && btn.classList.contains('btn')) {
+          const t = btn.textContent;
+          btn.textContent = 'Copied';
+          setTimeout(() => { btn.textContent = t; }, 1500);
+        }
+      });
+    }
+
+    function formatBytes(n) {
+      if (n == null || isNaN(n)) return '';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    async function loadAltStore() {
+      const container = document.getElementById('altstore-apps');
+      try {
+        const r = await fetch(RAW_BASE + '/repo/apps.json');
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json();
+        const apps = data.apps || [];
+        container.innerHTML = apps.map(app => `
+          <a href="https://openlyst.ink/apps/${escapeHtml(app.bundleIdentifier || '')}" target="_blank" rel="noopener" class="app-tile">
+            <img src="${escapeHtml(app.iconURL || '')}" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22 viewBox=%220 0 44 44%22%3E%3Crect fill=%22%23141210%22 width=%2244%22 height=%2244%22 rx=%2210%22/%3E%3C/svg%3E'" />
+            <div>
+              <div class="name">${escapeHtml(app.name || '')}</div>
+              <div class="meta">${escapeHtml((app.versions && app.versions[0] && app.versions[0].version) || '')}</div>
+            </div>
+          </a>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="error">Failed to load AltStore apps: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function loadFDroid() {
+      const container = document.getElementById('fdroid-apps');
+      try {
+        const r = await fetch(RAW_BASE + '/fdroid-repo/index.json');
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json();
+        const apps = data.apps || [];
+        container.innerHTML = apps.map(app => `
+          <a href="https://openlyst.ink" target="_blank" rel="noopener" class="app-tile">
+            <img src="${escapeHtml(app.icon || '')}" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22 viewBox=%220 0 44 44%22%3E%3Crect fill=%22%23141210%22 width=%2244%22 height=%2244%22 rx=%2210%22/%3E%3C/svg%3E'" />
+            <div>
+              <div class="name">${escapeHtml(app.name || '')}</div>
+              <div class="meta">${escapeHtml(app.packageName || '')}</div>
+            </div>
+          </a>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="error">Failed to load F-Droid apps: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function loadHomebrew() {
+      const container = document.getElementById('homebrew-formulae');
+      try {
+        const r = await fetch(RAW_BASE + '/homebrew-tap/tap-info.json');
+        if (!r.ok) throw new Error(r.statusText);
+        const info = await r.json();
+        const formulae = ['docan', 'docan-linux', 'doudou', 'doudou-linux', 'finar', 'finar-linux', 'klit', 'klit-linux', 'opentorrent', 'opentorrent-linux'];
+        container.innerHTML = `
+          <div class="card" style="margin-bottom: 0;">
+            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">
+              <strong style="color: var(--text);">${escapeHtml(info.name || 'OpenLyst Homebrew Tap')}</strong> — ${escapeHtml(info.description || '')}
+              ${info.formulae_count != null ? ` · ${info.formulae_count} formulae` : ''}
+            </p>
+            <p style="margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
+              ${formulae.map(f => escapeHtml(f)).join(', ')}
+            </p>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = `<div class="error">Failed to load Homebrew info: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function loadReleases() {
+      const container = document.getElementById('releases-list');
+      try {
+        const r = await fetch(API_BASE + '/releases?per_page=25');
+        if (!r.ok) throw new Error(r.statusText);
+        const releases = await r.json();
+        if (!Array.isArray(releases) || releases.length === 0) {
+          container.innerHTML = '<div class="loading">No releases found.</div>';
+          return;
+        }
+        container.innerHTML = releases.map(rel => {
+          const date = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '';
+          const pre = rel.prerelease ? ' <span class="badge pre">Pre-release</span>' : '';
+          return `
+            <a href="${escapeHtml(rel.html_url || '#')}" target="_blank" rel="noopener" class="release-row ${rel.prerelease ? 'prerelease' : ''}">
+              <div class="release-info">
+                <span class="release-tag">${escapeHtml(rel.tag_name || '')}</span>
+                <span class="release-name">${escapeHtml(rel.name || rel.tag_name || '')}</span>
+                <span class="release-date">${escapeHtml(date)}</span>
+                <span class="release-badges">${pre}</span>
+              </div>
+              <span class="release-badges">
+                <span class="badge">${(rel.assets && rel.assets.length) || 0} assets</span>
+              </span>
+            </a>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="error">Failed to load releases: ${escapeHtml(e.message)}. <a href="https://github.com/JustACalico/Openlyst-more-builds/releases" target="_blank" rel="noopener">Open releases on GitHub</a>.</div>`;
+      }
+    }
+
+    (async function init() {
+      await Promise.all([
+        loadAltStore(),
+        loadFDroid(),
+        loadHomebrew(),
+        loadReleases()
+      ]);
+    })();
+  </script>
+</body>
+</html>

@@ -4,6 +4,8 @@ This project provides builds for OpenLyst projects across multiple platforms.
 
 https://openlyst.ink
 
+**📦 [OpenLyst Builds — Releases & Repositories](https://justacalico.github.io/Openlyst-more-builds/)** — A GitHub Pages site listing all pre-releases, repositories (AltStore, F-Droid, Homebrew, AUR, Docker), and GitHub releases in one place. Enable Pages in repo Settings → Pages → Source: Deploy from branch → Branch: main, folder: `/docs`.
+
 ## Unified Build Script
 
 All repositories are generated using a single unified build script (`build.py`) that supports AltStore (iOS), F-Droid (Android), Homebrew (macOS/Linux), and AUR (Arch Linux).
