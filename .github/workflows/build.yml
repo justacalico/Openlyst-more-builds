@@ -1366,6 +1366,12 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
+      - name: Set macOS deployment target for gal plugin (requires 11.0+)
+        run: |
+          if [ -f macos/Podfile ]; then
+            sed -i '' "s/platform :osx, '[^']*'/platform :osx, '11.0'/" macos/Podfile
+          fi
+
       - name: Build macOS (No Code Signing)
         run: |
           flutter config --enable-macos-desktop
