@@ -314,7 +314,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Get version from pubspec
@@ -783,7 +783,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Build Windows
@@ -1280,7 +1280,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Get version from pubspec
@@ -1789,7 +1789,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Setup Android signing
@@ -2588,7 +2588,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Install appimagetool
@@ -3018,7 +3018,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          version: '3.13.0'
           cache: true
 
       - name: Get version from pubspec
