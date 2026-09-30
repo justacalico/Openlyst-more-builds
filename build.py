@@ -854,50 +854,73 @@ end
 # Map AUR pkgname -> (Openlyst slug, app_name for package(), bundle_subdir or None)
 AUR_PACKAGES = {
     'finar-bin': ('finar', 'finar', 'bundle', 'data/finar.png'),
-    'klit-bin': ('klit', 'klit', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
+    'kilt-bin': ('kilt', 'kilt', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
     'doudou-bin': ('doudou', 'doudou', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
     'docan-bin': ('docan', 'docan', None, 'data/flutter_assets/assets/icons/icon.png'),
 }
 
-# GitHub repo for build workflow releases (unstable AUR packages use these download URLs)
-GITHUB_RELEASES_API = "https://api.github.com/repos/justacalico/Openlyst-more-builds/releases"
+# Old AUR packages kept alive so existing installs keep building. Each one
+# prints a notice pointing at the package that replaced it.
+DEPRECATED_AUR_PACKAGES = {
+    'klit-bin': 'kilt-bin',
+    'klit-unstable': 'kilt-unstable',
+    'klit-bin-unstable': 'kilt-unstable',
+    'finar-bin-unstable': 'finar-unstable',
+    'doudou-bin-unstable': 'doudou-unstable',
+}
+
+# Openlyst API slug -> repo under gitlab.com/Openlyst (only where they differ)
+GITLAB_REPOS = {
+    'kilt': 'klit',
+}
+
+GITLAB_API = "https://gitlab.com/api/v4"
 
 
-def get_latest_linux_zip_from_github(slug: str, session: Optional[requests.Session] = None) -> Optional[tuple]:
-    """Fetch latest Linux zip URL and version from this repo's GitHub releases.
-    Returns (download_url, pkgver) or None. Uses first release that has an asset
-    matching {slug}-*-linux*.zip.
+def get_linux_zip_from_gitlab(slug: str, channel: str = "stable",
+                              session: Optional[requests.Session] = None) -> Optional[tuple]:
+    """Fetch the Linux x64 zip URL and version from the app's GitLab releases.
+    channel 'stable' picks the newest v* tag and falls back to the nightly
+    release; 'nightly' uses the rolling nightly release only.
+    Returns (download_url, pkgver) or None.
     """
+    repo = GITLAB_REPOS.get(slug, slug)
     session = session or requests.Session()
     session.headers.setdefault("User-Agent", "Openlyst-Unified-Builder/1.0")
     try:
-        r = session.get(GITHUB_RELEASES_API, params={"per_page": 30}, timeout=15)
+        r = session.get(f"{GITLAB_API}/projects/Openlyst%2F{repo}/releases",
+                        params={"per_page": 20}, timeout=15)
         r.raise_for_status()
         releases = r.json()
     except Exception as e:
-        logger.warning(f"Failed to fetch GitHub releases for unstable AUR: {e}")
+        logger.warning(f"Failed to fetch GitLab releases for {slug}: {e}")
         return None
     if not isinstance(releases, list):
         return None
-    prefix = f"{slug}-"
-    suffix_zip = "-linux-x64.zip"
+
+    def pick_zip(links) -> Optional[tuple]:
+        for link in links:
+            name = link.get("name") or ""
+            if "-linux-x64-" not in name or not name.endswith(".zip"):
+                continue
+            url = link.get("direct_asset_url") or link.get("url")
+            m = re.search(r"-linux-x64-([0-9]+(?:\.[0-9]+)*)-", name)
+            if url and m:
+                return (url, m.group(1))
+        return None
+
+    nightly = None
     for release in releases:
         tag = release.get("tag_name") or ""
-        assets = release.get("assets") or []
-        for asset in assets:
-            name = asset.get("name") or ""
-            if name.startswith(prefix) and (name.endswith(suffix_zip) or "-linux" in name and name.endswith(".zip")):
-                url = asset.get("browser_download_url")
-                if not url:
-                    continue
-                # pkgver from filename e.g. opentorrent-2.0.0-2026-02-17-linux-x64.zip -> 2.0.0
-                parts = name.replace(".zip", "").split("-")
-                if len(parts) >= 2:
-                    pkgver = parts[1]
-                else:
-                    pkgver = "1.0.0"
-                return (url, pkgver)
-    return None
+        links = (release.get("assets") or {}).get("links") or []
+        if tag == "nightly":
+            nightly = pick_zip(links)
+            continue
+        if channel == "stable" and re.match(r"^v?\d", tag):
+            hit = pick_zip(links)
+            if hit:
+                return hit
+    return nightly
 
 
 def get_linux_zip_url(version: Dict) -> Optional[str]:
@@ -968,14 +991,16 @@ EOF
         app_name: Optional[str] = None,
         bundle_subdir: Optional[str] = 'bundle',
         icon_path: Optional[str] = None,
+        linux_url: Optional[str] = None,
+        pkgver: Optional[str] = None,
     ) -> Optional[str]:
         """Build PKGBUILD content for one AUR package. If app_name/bundle_subdir/icon_path
         are None, they are taken from AUR_PACKAGES when pkgname is known, else defaults."""
-        linux_url = get_linux_zip_url(version)
+        linux_url = linux_url or get_linux_zip_url(version)
         if not linux_url:
             logger.warning(f"No Linux zip URL for {slug}, skipping AUR {pkgname}")
             return None
-        pkgver = version.get('version', '1.0.0')
+        pkgver = pkgver or version.get('version', '1.0.0')
         pkgrel = 1
         if pkgname in AUR_PACKAGES:
             _, app_name, bundle_subdir, icon_path = AUR_PACKAGES[pkgname]
@@ -994,14 +1019,14 @@ EOF
         depends_str = " ".join(f"'{d}'" for d in depends)
         cat_map = {
             'finar': 'AudioVideo;Video;Player',
-            'klit': 'Network;Graphics',
+            'kilt': 'Network;Graphics',
             'doudou': 'Audio;Music;Player',
             'docan': 'Network;Chat;Utility',
             'opentorrent': 'Network;FileTransfer;',
         }
         kw_map = {
             'finar': 'jellyfin;media;video;streaming;',
-            'klit': 'e621;booru;privacy;',
+            'kilt': 'e621;booru;privacy;',
             'doudou': 'music;streaming;audio;player;',
             'docan': 'ai;chat;assistant;llm;',
             'opentorrent': 'torrent;download;',
@@ -1012,7 +1037,7 @@ EOF
             app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
         )
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
-# Version and download URL from Openlyst API: https://openlyst.ink/docs/api
+# Download URL from the app's GitLab release: https://gitlab.com/Openlyst
 pkgname={pkgname}
 pkgver={pkgver}
 pkgrel={pkgrel}
@@ -1068,14 +1093,14 @@ sha256sums=('SKIP')
         depends_str = " ".join(f"'{d}'" for d in depends)
         cat_map = {
             'finar': 'AudioVideo;Video;Player',
-            'klit': 'Network;Graphics',
+            'kilt': 'Network;Graphics',
             'doudou': 'Audio;Music;Player',
             'docan': 'Network;Chat;Utility',
             'opentorrent': 'Network;FileTransfer;',
         }
         kw_map = {
             'finar': 'jellyfin;media;video;streaming;',
-            'klit': 'e621;booru;privacy;',
+            'kilt': 'e621;booru;privacy;',
             'doudou': 'music;streaming;audio;player;',
             'docan': 'ai;chat;assistant;llm;',
             'opentorrent': 'torrent;download;',
@@ -1086,7 +1111,7 @@ sha256sums=('SKIP')
             app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
         )
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
-# Unstable build from GitHub releases: https://github.com/justacalico/Openlyst-more-builds/releases
+# Unstable build from the app's GitLab nightly release: https://gitlab.com/Openlyst
 pkgname={pkgname}
 pkgver={pkgver}
 pkgrel=1
@@ -1106,112 +1131,169 @@ sha256sums=('SKIP')
 '''
         return content
 
+    def _deprecated_pkgbuild(
+        self,
+        pkgname: str,
+        replacement: str,
+        slug: str,
+        app: Dict,
+        linux_url: str,
+        pkgver: str,
+    ) -> Optional[str]:
+        """PKGBUILD for a retired package. It still builds and installs so
+        'yay -Syu' keeps working, but prints a notice pointing at the
+        replacement package."""
+        content = self.build_pkgbuild_from_url(pkgname, slug, app, linux_url, pkgver)
+        if not content:
+            return None
+        content = re.sub(
+            r'# Unstable build from.*\n',
+            f'# Deprecated - use {replacement} instead. Kept so existing installs still build.\n',
+            content, count=1)
+        content = re.sub(
+            r'pkgdesc="[^"]*"',
+            f'pkgdesc="Deprecated - install {replacement} instead"',
+            content, count=1)
+        # pkgrel 2 so installed copies pick up the deprecation notice on upgrade
+        content = re.sub(r'pkgrel=1', 'pkgrel=2', content, count=1)
+        content = content.replace(
+            "options=('!strip')",
+            f"options=('!strip')\ninstall={pkgname}.install",
+            1)
+        return content
+
+    def _deprecated_install(self, pkgname: str, replacement: str) -> str:
+        return f'''post_install() {{
+    echo "============================================================"
+    echo " {pkgname} is deprecated and no longer updated."
+    echo " Switch to {replacement}:  yay -S {replacement}"
+    echo "============================================================"
+}}
+
+post_upgrade() {{
+    post_install
+}}
+'''
+
     def build(
         self,
         output_dir: Optional[str] = None,
         no_unstable_aur: bool = True,
         unstable_aur_only: bool = False,
     ) -> bool:
-        """Generate PKGBUILD for known AUR packages and any new app with a Linux build.
-        no_unstable_aur: if True, do not generate -unstable AUR packages (default True for Build All Repositories).
-        unstable_aur_only: if True, only generate -unstable packages from GitHub releases (for Build Apps workflow).
+        """Generate PKGBUILDs for AUR packages from the app's GitLab releases.
+        -bin packages track the newest versioned release (falling back to the
+        nightly release when none exists) and -unstable packages track the
+        nightly release. Retired bases in DEPRECATED_AUR_PACKAGES are
+        regenerated too so existing installs keep building.
+        unstable_aur_only: only emit -unstable packages and the deprecated
+        packages redirecting to them (Build Apps workflow).
         """
         out = self.output_dir if output_dir is None else Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
-        built_slugs: Set[str] = set()
+        session = self.client.session
         success = 0
 
-        if unstable_aur_only:
-            # Only generate unstable AUR packages (Build Apps workflow)
-            slugs_for_unstable: Set[str] = {s for (s, _, _, _) in AUR_PACKAGES.values()}
-            apps_linux = self.client.get_all_apps(platform="Linux")
-            for app in apps_linux or []:
-                slug = app.get('slug')
-                if slug and get_latest_linux_zip_from_github(slug, self.client.session):
-                    slugs_for_unstable.add(slug)
-            for slug in slugs_for_unstable:
-                gh = get_latest_linux_zip_from_github(slug, self.client.session)
-                if not gh:
-                    continue
-                linux_url, pkgver = gh
-                app = self.client.get_app_details(slug)
-                if not app:
-                    continue
-                pkgname_unstable = f"{slug}-unstable"
-                content = self.build_pkgbuild_from_url(pkgname_unstable, slug, app, linux_url, pkgver)
-                if content:
-                    pkg_dir = out / pkgname_unstable
-                    pkg_dir.mkdir(parents=True, exist_ok=True)
-                    (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
-                    logger.info(f"Wrote AUR PKGBUILD (unstable): {pkg_dir / 'PKGBUILD'}")
-                    success += 1
-            if success == 0:
-                logger.error("No unstable AUR PKGBUILDs generated")
-                return False
-            logger.info(f"AUR (unstable only): generated {success} PKGBUILDs in {out}")
-            return True
-
-        # Known AUR packages (stable -bin only)
-        for pkgname, (slug, _, _, _) in AUR_PACKAGES.items():
-            app = self.client.get_app_details(slug)
-            if not app:
-                logger.warning(f"Could not fetch app {slug} for AUR {pkgname}")
-                continue
-            versions = self.client.get_app_versions(slug)
-            if not versions:
-                logger.warning(f"No versions for {slug}")
-                continue
-            latest = versions[0]
-            content = self.build_pkgbuild(pkgname, slug, app, latest)
-            if content:
-                pkg_dir = out / pkgname
-                pkg_dir.mkdir(parents=True, exist_ok=True)
-                (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
-                logger.info(f"Wrote AUR PKGBUILD: {pkg_dir / 'PKGBUILD'}")
-                built_slugs.add(slug)
-                success += 1
-        # New apps with Linux zip that don't have an AUR package yet (e.g. opentorrent)
-        existing_slugs = {t[0] for t in AUR_PACKAGES.values()}
-        apps_linux = self.client.get_all_apps(platform="Linux")
-        new_app_slugs: Set[str] = set()
-        for app in apps_linux or []:
+        # Every slug we package, plus any new app on the API.
+        slugs: List[str] = []
+        for (slug, _, _, _) in AUR_PACKAGES.values():
+            if slug not in slugs:
+                slugs.append(slug)
+        for app in self.client.get_all_apps(platform="Linux") or []:
             slug = app.get('slug')
-            if not slug or slug in existing_slugs or slug in built_slugs:
-                continue
-            versions = self.client.get_app_versions(slug)
-            if not versions:
-                continue
-            latest = versions[0]
-            if not get_linux_zip_url(latest):
-                continue
-            pkgname = f"{slug}-bin"
-            content = self.build_pkgbuild(pkgname, slug, app, latest)
+            if slug and slug not in slugs:
+                slugs.append(slug)
+
+        resolved: Dict[str, Dict[str, Optional[tuple]]] = {}
+        for slug in slugs:
+            resolved[slug] = {
+                'stable': get_linux_zip_from_gitlab(slug, 'stable', session),
+                'nightly': get_linux_zip_from_gitlab(slug, 'nightly', session),
+            }
+
+        def emit(pkgname: str, content: str, extra_files: Optional[Dict[str, str]] = None) -> None:
+            nonlocal success
+            pkg_dir = out / pkgname
+            pkg_dir.mkdir(parents=True, exist_ok=True)
+            (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
+            for fname, ftext in (extra_files or {}).items():
+                (pkg_dir / fname).write_text(ftext, encoding="utf-8")
+            logger.info(f"Wrote AUR PKGBUILD: {pkg_dir / 'PKGBUILD'}")
+            success += 1
+
+        def deprecated_target(replacement: str) -> tuple:
+            """Return (slug, channel) that a deprecated package should reuse."""
+            for pkgname, (slug, _, _, _) in AUR_PACKAGES.items():
+                if pkgname == replacement:
+                    return slug, 'stable'
+            return replacement[:-len('-unstable')], 'nightly'
+
+        def emit_deprecated(old: str, new: str) -> None:
+            slug, channel = deprecated_target(new)
+            hit = resolved.get(slug, {}).get(channel)
+            if not hit:
+                logger.warning(f"No {channel} GitLab zip for {slug}, skipping deprecated {old}")
+                return
+            linux_url, pkgver = hit
+            app = self.client.get_app_details(slug) or {}
+            content = self._deprecated_pkgbuild(old, new, slug, app, linux_url, pkgver)
             if content:
-                pkg_dir = out / pkgname
-                pkg_dir.mkdir(parents=True, exist_ok=True)
-                (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
-                logger.info(f"Wrote AUR PKGBUILD (new app): {pkg_dir / 'PKGBUILD'}")
-                new_app_slugs.add(slug)
-                success += 1
-        # Unstable AUR packages only when not no_unstable_aur (Build Apps workflow does unstable separately)
-        if not no_unstable_aur:
-            for slug in built_slugs | new_app_slugs:
-                gh = get_latest_linux_zip_from_github(slug, self.client.session)
-                if not gh:
-                    logger.debug(f"No GitHub release Linux zip for {slug}, skipping unstable")
+                emit(old, content,
+                     {f"{old}.install": self._deprecated_install(old, new)})
+
+        def emit_unstable() -> None:
+            for slug in slugs:
+                hit = resolved[slug]['nightly']
+                if not hit:
                     continue
-                linux_url, pkgver = gh
+                linux_url, pkgver = hit
                 app = self.client.get_app_details(slug)
                 if not app:
                     continue
                 pkgname_unstable = f"{slug}-unstable"
                 content = self.build_pkgbuild_from_url(pkgname_unstable, slug, app, linux_url, pkgver)
                 if content:
-                    pkg_dir = out / pkgname_unstable
-                    pkg_dir.mkdir(parents=True, exist_ok=True)
-                    (pkg_dir / "PKGBUILD").write_text(content, encoding="utf-8")
-                    logger.info(f"Wrote AUR PKGBUILD (unstable): {pkg_dir / 'PKGBUILD'}")
-                    success += 1
+                    emit(pkgname_unstable, content)
+            for old, new in DEPRECATED_AUR_PACKAGES.items():
+                if not new.endswith('-bin'):
+                    emit_deprecated(old, new)
+
+        if unstable_aur_only:
+            emit_unstable()
+        else:
+            # Stable -bin packages
+            for pkgname, (slug, _, _, _) in AUR_PACKAGES.items():
+                hit = resolved[slug]['stable']
+                app = self.client.get_app_details(slug)
+                if not hit or not app:
+                    logger.warning(f"Skipping {pkgname}: no GitLab release or app data")
+                    continue
+                linux_url, pkgver = hit
+                latest = (self.client.get_app_versions(slug) or [{}])[0]
+                content = self.build_pkgbuild(pkgname, slug, app, latest,
+                                              linux_url=linux_url, pkgver=pkgver)
+                if content:
+                    emit(pkgname, content)
+            # New apps get a -bin package once they have a GitLab release
+            existing_slugs = {t[0] for t in AUR_PACKAGES.values()}
+            for slug in slugs:
+                if slug in existing_slugs or not resolved[slug]['stable']:
+                    continue
+                app = self.client.get_app_details(slug)
+                if not app:
+                    continue
+                linux_url, pkgver = resolved[slug]['stable']
+                latest = (self.client.get_app_versions(slug) or [{}])[0]
+                content = self.build_pkgbuild(f"{slug}-bin", slug, app, latest,
+                                              linux_url=linux_url, pkgver=pkgver)
+                if content:
+                    emit(f"{slug}-bin", content)
+            for old, new in DEPRECATED_AUR_PACKAGES.items():
+                if new.endswith('-bin'):
+                    emit_deprecated(old, new)
+            if not no_unstable_aur:
+                emit_unstable()
+
         if success == 0:
             logger.error("No AUR PKGBUILDs generated")
             return False
