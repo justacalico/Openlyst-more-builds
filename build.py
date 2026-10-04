@@ -885,10 +885,10 @@ GITLAB_API = "https://gitlab.com/api/v4"
 
 def get_linux_zip_from_gitlab(slug: str, channel: str = "stable",
                               session: Optional[requests.Session] = None) -> Optional[tuple]:
-    """Fetch the Linux x64 zip URL and version from the app's GitLab releases.
+    """Fetch the Linux zip URLs and version from the app's GitLab releases.
     channel 'stable' picks the newest v* tag and falls back to the nightly
     release; 'nightly' uses the rolling nightly release only.
-    Returns (download_url, pkgver) or None.
+    Returns (x64_url, arm64_url_or_None, pkgver) or None.
     """
     repo = GITLAB_REPOS.get(slug, slug)
     session = session or requests.Session()
@@ -905,14 +905,21 @@ def get_linux_zip_from_gitlab(slug: str, channel: str = "stable",
         return None
 
     def pick_zip(links) -> Optional[tuple]:
+        x64_url = arm_url = ver = None
         for link in links:
             name = link.get("name") or ""
-            if "-linux-x64-" not in name or not name.endswith(".zip"):
-                continue
             url = link.get("direct_asset_url") or link.get("url")
-            m = re.search(r"-linux-x64-([0-9]+(?:\.[0-9]+)*)-", name)
-            if url and m:
-                return (url, m.group(1))
+            if not name.endswith(".zip") or not url:
+                continue
+            if "-linux-x64-" in name:
+                x64_url = url
+                m = re.search(r"-linux-x64-([0-9]+(?:\.[0-9]+)*)-", name)
+                if m:
+                    ver = m.group(1)
+            elif "-linux-arm64-" in name:
+                arm_url = url
+        if x64_url and ver:
+            return (x64_url, arm_url, ver)
         return None
 
     nightly = None
@@ -1001,6 +1008,7 @@ EOF
         icon_path: Optional[str] = None,
         linux_url: Optional[str] = None,
         pkgver: Optional[str] = None,
+        arm_url: Optional[str] = None,
     ) -> Optional[str]:
         """Build PKGBUILD content for one AUR package. If app_name/bundle_subdir/icon_path
         are None, they are taken from AUR_PACKAGES when pkgname is known, else defaults."""
@@ -1045,13 +1053,23 @@ EOF
             app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords,
             bin_name=AUR_BIN_NAMES.get(slug),
         )
+        if arm_url:
+            arch_line = "arch=('x86_64' 'aarch64')"
+            source_block = (f'source_x86_64=("{pkgname}-${{pkgver}}-x86_64.zip::{linux_url}")\n'
+                            f'source_aarch64=("{pkgname}-${{pkgver}}-aarch64.zip::{arm_url}")\n'
+                            "sha256sums_x86_64=('SKIP')\n"
+                            "sha256sums_aarch64=('SKIP')")
+        else:
+            arch_line = "arch=('x86_64')"
+            source_block = (f'source=("{pkgname}-${{pkgver}}.zip::{linux_url}")\n'
+                            "sha256sums=('SKIP')")
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
 # Download URL from the app's GitLab release: https://gitlab.com/Openlyst
 pkgname={pkgname}
 pkgver={pkgver}
 pkgrel={pkgrel}
 pkgdesc="{pkgdesc}"
-arch=('x86_64')
+{arch_line}
 url="{url}"
 license=('{license_val}')
 depends=({depends_str})
@@ -1059,8 +1077,7 @@ optdepends=()
 provides=('{app_name}')
 conflicts=('{app_name}')
 options=('!strip')
-source=("{pkgname}-${{pkgver}}.zip::{linux_url}")
-sha256sums=('SKIP')
+{source_block}
 
 {package_body}
 '''
@@ -1080,6 +1097,7 @@ sha256sums=('SKIP')
         app: Dict,
         linux_url: str,
         pkgver: str,
+        arm_url: Optional[str] = None,
         app_name: Optional[str] = None,
         bundle_subdir: Optional[str] = None,
         icon_path: Optional[str] = None,
@@ -1120,13 +1138,23 @@ sha256sums=('SKIP')
             app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords,
             bin_name=AUR_BIN_NAMES.get(slug),
         )
+        if arm_url:
+            arch_line = "arch=('x86_64' 'aarch64')"
+            source_block = (f'source_x86_64=("{pkgname}-${{pkgver}}-x86_64.zip::{linux_url}")\n'
+                            f'source_aarch64=("{pkgname}-${{pkgver}}-aarch64.zip::{arm_url}")\n'
+                            "sha256sums_x86_64=('SKIP')\n"
+                            "sha256sums_aarch64=('SKIP')")
+        else:
+            arch_line = "arch=('x86_64')"
+            source_block = (f'source=("{pkgname}-${{pkgver}}.zip::{linux_url}")\n'
+                            "sha256sums=('SKIP')")
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
 # Unstable build from the app's GitLab nightly release: https://gitlab.com/Openlyst
 pkgname={pkgname}
 pkgver={pkgver}
 pkgrel=1
 pkgdesc="{pkgdesc}"
-arch=('x86_64')
+{arch_line}
 url="{url}"
 license=('{license_val}')
 depends=({depends_str})
@@ -1134,8 +1162,7 @@ optdepends=()
 provides=('{app_name}')
 conflicts=('{app_name}')
 options=('!strip')
-source=("{pkgname}-${{pkgver}}.zip::{linux_url}")
-sha256sums=('SKIP')
+{source_block}
 
 {package_body}
 '''
@@ -1149,11 +1176,13 @@ sha256sums=('SKIP')
         app: Dict,
         linux_url: str,
         pkgver: str,
+        arm_url: Optional[str] = None,
     ) -> Optional[str]:
         """PKGBUILD for a retired package. It still builds and installs so
         'yay -Syu' keeps working, but prints a notice pointing at the
         replacement package."""
-        content = self.build_pkgbuild_from_url(pkgname, slug, app, linux_url, pkgver)
+        content = self.build_pkgbuild_from_url(pkgname, slug, app, linux_url, pkgver,
+                                               arm_url=arm_url)
         if not content:
             return None
         content = re.sub(
@@ -1244,9 +1273,10 @@ post_upgrade() {{
             if not hit:
                 logger.warning(f"No {channel} GitLab zip for {slug}, skipping deprecated {old}")
                 return
-            linux_url, pkgver = hit
+            linux_url, arm_url, pkgver = hit
             app = self.client.get_app_details(slug) or {}
-            content = self._deprecated_pkgbuild(old, new, slug, app, linux_url, pkgver)
+            content = self._deprecated_pkgbuild(old, new, slug, app, linux_url, pkgver,
+                                                arm_url=arm_url)
             if content:
                 emit(old, content,
                      {f"{old}.install": self._deprecated_install(old, new)})
@@ -1256,12 +1286,13 @@ post_upgrade() {{
                 hit = resolved[slug]['nightly']
                 if not hit:
                     continue
-                linux_url, pkgver = hit
+                linux_url, arm_url, pkgver = hit
                 app = self.client.get_app_details(slug)
                 if not app:
                     continue
                 pkgname_unstable = f"{slug}-unstable"
-                content = self.build_pkgbuild_from_url(pkgname_unstable, slug, app, linux_url, pkgver)
+                content = self.build_pkgbuild_from_url(pkgname_unstable, slug, app, linux_url, pkgver,
+                                                       arm_url=arm_url)
                 if content:
                     emit(pkgname_unstable, content)
             for old, new in DEPRECATED_AUR_PACKAGES.items():
@@ -1278,10 +1309,10 @@ post_upgrade() {{
                 if not hit or not app:
                     logger.warning(f"Skipping {pkgname}: no GitLab release or app data")
                     continue
-                linux_url, pkgver = hit
+                linux_url, arm_url, pkgver = hit
                 latest = (self.client.get_app_versions(slug) or [{}])[0]
                 content = self.build_pkgbuild(pkgname, slug, app, latest,
-                                              linux_url=linux_url, pkgver=pkgver)
+                                              linux_url=linux_url, pkgver=pkgver, arm_url=arm_url)
                 if content:
                     emit(pkgname, content)
             # New apps get a -bin package once they have a GitLab release
@@ -1292,10 +1323,10 @@ post_upgrade() {{
                 app = self.client.get_app_details(slug)
                 if not app:
                     continue
-                linux_url, pkgver = resolved[slug]['stable']
+                linux_url, arm_url, pkgver = resolved[slug]['stable']
                 latest = (self.client.get_app_versions(slug) or [{}])[0]
                 content = self.build_pkgbuild(f"{slug}-bin", slug, app, latest,
-                                              linux_url=linux_url, pkgver=pkgver)
+                                              linux_url=linux_url, pkgver=pkgver, arm_url=arm_url)
                 if content:
                     emit(f"{slug}-bin", content)
             for old, new in DEPRECATED_AUR_PACKAGES.items():
