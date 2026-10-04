@@ -854,7 +854,7 @@ end
 # Map AUR pkgname -> (Openlyst slug, app_name for package(), bundle_subdir or None)
 AUR_PACKAGES = {
     'finar-bin': ('finar', 'finar', 'bundle', 'data/finar.png'),
-    'kilt-bin': ('kilt', 'kilt', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
+    'kilt-bin': ('kilt', 'kilt', 'bundle', 'data/flutter_assets/assets/icon/app/icon.png'),
     'doudou-bin': ('doudou', 'doudou', 'bundle', 'data/flutter_assets/assets/icons/icon.png'),
     'docan-bin': ('docan', 'docan', None, 'data/flutter_assets/assets/icons/icon.png'),
 }
@@ -867,6 +867,12 @@ DEPRECATED_AUR_PACKAGES = {
     'klit-bin-unstable': 'kilt-unstable',
     'finar-bin-unstable': 'finar-unstable',
     'doudou-bin-unstable': 'doudou-unstable',
+}
+
+# Binary name inside the Linux bundle when it differs from the app name
+# (kilt releases still ship a `klit` executable)
+AUR_BIN_NAMES = {
+    'kilt': 'klit',
 }
 
 # Openlyst API slug -> repo under gitlab.com/Openlyst (only where they differ)
@@ -953,8 +959,10 @@ class AURBuilder:
         pkgdesc: str,
         categories: str,
         keywords: str,
+        bin_name: Optional[str] = None,
     ) -> str:
         """Generate package() function body."""
+        bin_name = bin_name or app_name
         cd_dir = f'${{srcdir}}/{bundle_subdir}' if bundle_subdir else '${srcdir}'
         install_dir = f'/opt/{app_name}'
         icon_install = f'    if [ -f "{icon_path}" ]; then\n        install -Dm644 "{icon_path}" "${{pkgdir}}/usr/share/icons/hicolor/256x256/apps/{app_name}.png"\n    fi'
@@ -962,7 +970,7 @@ class AURBuilder:
     cd "{cd_dir}"
 
     install -d "${{pkgdir}}{install_dir}"
-    install -Dm755 "{app_name}" "${{pkgdir}}{install_dir}/{app_name}"
+    install -Dm755 "{bin_name}" "${{pkgdir}}{install_dir}/{app_name}"
     install -d "${{pkgdir}}{install_dir}/lib"
     install -Dm644 lib/*.so "${{pkgdir}}{install_dir}/lib/"
     cp -r data "${{pkgdir}}{install_dir}/"
@@ -1034,7 +1042,8 @@ EOF
         categories = cat_map.get(slug, 'Utility')
         keywords = kw_map.get(slug, '')
         package_body = self._package_script(
-            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
+            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords,
+            bin_name=AUR_BIN_NAMES.get(slug),
         )
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
 # Download URL from the app's GitLab release: https://gitlab.com/Openlyst
@@ -1108,7 +1117,8 @@ sha256sums=('SKIP')
         categories = cat_map.get(slug, 'Utility')
         keywords = kw_map.get(slug, '')
         package_body = self._package_script(
-            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords
+            app_name, bundle_subdir, icon_path, pkgdesc, categories, keywords,
+            bin_name=AUR_BIN_NAMES.get(slug),
         )
         content = f'''# Maintainer: OpenLyst <https://openlyst.ink>
 # Unstable build from the app's GitLab nightly release: https://gitlab.com/Openlyst
